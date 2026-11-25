@@ -170,7 +170,15 @@
       wordTravel: Math.max(0, word.offsetWidth - wordWindow.clientWidth)
     };
     cancelAnimationFrame(frame);
-    for (const flight of flights) flight.phase = undefined;
+    for (const flight of flights) {
+      flight.phase = undefined;
+      if (decorativeOrbs.matches) {
+        const {slot} = flight;
+        flight.exitDistance = Math.max(0, slot.offsetTop + slot.offsetHeight + 18);
+        const side = slot.offsetLeft + slot.offsetWidth / 2 < metrics.width / 2 ? -1 : 1;
+        flight.exitDrift = Math.abs(flight.drift) * side;
+      }
+    }
     previousProgress = -1;
     update(performance.now(), true);
   }
@@ -191,13 +199,20 @@
         history.style.setProperty('--history-lead', ((progress - 1) * metrics.distance).toFixed(2) + 'px');
       }
       for (const flight of flights) {
-        const {slot, start, end, drift, lift} = flight;
+        const {slot, drift, lift} = flight;
+        // Give each phone orb more room to accelerate while finishing before the title starts.
+        const start = touchLayout ? .012 + .44 * flight.start : flight.start;
+        const end = touchLayout ? .19 + .61 * flight.end : flight.end;
         const phase = smooth(limit((progress - start) / (end - start)));
         if (phase === flight.phase) continue;
         flight.phase = phase;
-        const opacity = 1 - smooth(limit((phase - .76) / .24));
-        const x = (metrics.width * phase * drift).toFixed(2);
-        const y = (-metrics.height * phase * lift).toFixed(2);
+        const fadeProgress = touchLayout ? phase / .8 : (phase - .76) / .24;
+        const opacity = 1 - smooth(limit(fadeProgress));
+        const driftPhase = touchLayout ? phase * (2 - phase) * 1.5 : phase;
+        const driftDirection = touchLayout ? flight.exitDrift : drift;
+        const liftDistance = touchLayout ? flight.exitDistance : metrics.height * lift;
+        const x = (metrics.width * driftPhase * driftDirection).toFixed(2);
+        const y = (-liftDistance * phase).toFixed(2);
         slot.style.transform = phase ? `translate3d(${x}px,${y}px,0)` : '';
         slot.style.opacity = String(opacity);
         slot.classList.toggle('is-flown', opacity === 0);
