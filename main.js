@@ -165,11 +165,12 @@
     const stageHeight = stage.offsetHeight;
     const distance = Math.max(1, box.height - stageHeight);
     const touchLayout = decorativeOrbs.matches;
-    const stickyInset = touchLayout ? Math.min(0, parseFloat(getComputedStyle(stage).top) || 0) : 0;
+    // Finish the mobile word movement after the cover releases into normal scrolling.
+    const wordTail = touchLayout ? Math.min(stageHeight * .22, 195) : 0;
     metrics = {
       top: box.top + scrollY,
-      distance: distance - stickyInset,
-      initialHistoryLead: -distance,
+      distance: distance + wordTail,
+      pinShare: distance / (distance + wordTail),
       height: stageHeight,
       width: wordWindow.clientWidth,
       wordTravel: Math.max(0, word.offsetWidth - wordWindow.clientWidth),
@@ -209,19 +210,19 @@
     const progress = touchLayout && !snap && !outside
       ? followScroll(previousProgress, scrollProgress, elapsed, 86, .0006)
       : scrollProgress;
-    // Align the photo with the pinned stage even while the foreground catches up to the swipe.
-    const lead = Math.max(metrics.initialHistoryLead, (scrollProgress - 1) * metrics.distance);
-    if (snap || lead !== historyLead) {
+    const lead = (scrollProgress - 1) * metrics.distance;
+    if (!touchLayout && (snap || lead !== historyLead)) {
       history.style.setProperty('--history-lead', lead.toFixed(2) + 'px');
       historyLead = lead;
     }
     if (progress !== previousProgress) {
+      const coverProgress = limit(progress / metrics.pinShare);
       for (const flight of flights) {
         const {slot, drift, lift} = flight;
         // Give each phone orb more room to accelerate while finishing before the title starts.
         const start = touchLayout ? .012 + .44 * flight.start : flight.start;
         const end = touchLayout ? .19 + .61 * flight.end : flight.end;
-        const phase = smooth(limit((progress - start) / (end - start)));
+        const phase = smooth(limit((coverProgress - start) / (end - start)));
         if (phase === flight.phase) continue;
         flight.phase = phase;
         const fadeProgress = touchLayout ? phase / .8 : (phase - .76) / .24;
@@ -236,12 +237,13 @@
         slot.classList.toggle('is-flown', opacity === 0);
         slot.inert = opacity < .05;
       }
-      copy.style.opacity = String(1 - smooth(limit((progress - .55) / .32)));
-      copy.inert = progress >= .87;
+      copy.style.opacity = String(1 - smooth(limit((coverProgress - .55) / .32)));
+      copy.inert = coverProgress >= .87;
       previousProgress = progress;
     }
     // The type follows the second stretch of scroll after the last photograph leaves.
-    const target = smooth(limit((progress - .50) / .50));
+    const wordStart = .5 * metrics.pinShare;
+    const target = smooth(limit((progress - wordStart) / (1 - wordStart)));
     const oldWordProgress = wordProgress;
     wordProgress = snap || touchLayout || outside ? target :
       followScroll(wordProgress, target, elapsed, 70, .00015);
@@ -272,7 +274,10 @@
   }
   motion.addEventListener('change', measure);
   document.fonts.ready.then(measure);
-  window.addEventListener('resize', measure, { passive:true });
+  // Stable cover dimensions shouldn't be remeasured when Safari hides its toolbar.
+  const heroResize = new ResizeObserver(measure);
+  heroResize.observe(intro);
+  heroResize.observe(word);
   window.addEventListener('scroll', queue, { passive:true });
   window.addEventListener('pageshow', measure);
   measure();

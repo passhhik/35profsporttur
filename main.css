@@ -124,8 +124,8 @@ a{color:inherit}
 .forum-word{position:absolute;top:50%;left:-2.083vw;width:max-content;color:var(--bronze);font:500 25.312vw/1 "Cormorant Garamond",Georgia,serif;text-box:trim-both cap alphabetic;text-transform:uppercase;white-space:nowrap;transform:translate3d(var(--word-x,0px),-50%,0);font-variant-numeric:lining-nums proportional-nums}
 .nav-toggle,.nav-close,.nav-backdrop{display:none}
 @media(max-width:1120px){
- .forum-header{display:flex;justify-content:space-between;padding-top:calc(clamp(16px,1.667vw,32px) + env(safe-area-inset-top,0px));padding-inline:max(2.778%,env(safe-area-inset-left,0px)) max(2.778%,env(safe-area-inset-right,0px))}
- .forum-header::before{background:linear-gradient(var(--paper),var(--paper)) top/100% env(safe-area-inset-top,0px) no-repeat,url("assets/header-surface.png") center/100% 100%}
+ .forum-header{display:flex;justify-content:space-between;padding-top:calc(clamp(16px,1.667vw,32px) + env(safe-area-inset-top,0px));padding-inline:max(2.778%,env(safe-area-inset-left,0px)) max(2.778%,env(safe-area-inset-right,0px));background-color:var(--paper)}
+ .forum-header::before{inset:100% 0 auto;height:22px;background:linear-gradient(var(--paper),transparent)}
  .nav-toggle{display:grid;place-content:center;gap:6px;width:46px;height:46px;border-radius:50%;background:#f3eee5e8;color:var(--ink);border:1px solid #29221e99}
  .nav-toggle span{display:block;width:20px;height:1px;background:currentColor}
  .has-open-menu{overflow:hidden;overscroll-behavior:none}
@@ -149,7 +149,6 @@ a{color:inherit}
  .header-actions .forum-btn{min-height:50px;font-size:1rem}
 }
 @media(max-width:740px){
- .intro{--stage-h:clamp(605px,89svh,850px)}
  .forum-header{padding:calc(14px + env(safe-area-inset-top,0px)) max(5%,env(safe-area-inset-right,0px)) 14px max(5%,env(safe-area-inset-left,0px))}.brand img{width:140px}
  .orb-slot{width:clamp(110px,29vw,175px)}
  .orb-group{left:-4%;top:12%}.orb-podium{left:67%;top:8%}.orb-team{left:75%;top:68%}
@@ -161,17 +160,25 @@ a{color:inherit}
  .forum-btn{font-size:.93rem;padding:11px 18px;min-height:44px}
 }
 @media(max-width:740px),(hover:none){
+ .intro{--stage-h:100svh}
  html:not(.has-motion) .hero-stage{position:relative;top:auto}
  .has-motion .intro{height:calc(var(--stage-h) + clamp(360px,94svh,780px))}
- .has-motion .hero-stage{top:min(0px,calc(89svh - var(--stage-h)))}
+ .has-motion .hero-stage{top:0}
+ .has-motion .intro + #history{translate:none;scroll-margin-top:0}
  .memories,.orb-float{pointer-events:none}
  .orb-float::before,.orb-caption{display:none}
  .orb-float{container-type:normal;animation:none}
  .orb-group .orb-float,.orb-podium .orb-float,.orb-team .orb-float{animation:levitate-soft var(--float-time,7s) var(--delay,0s) ease-in-out 2 alternate both}
  .word-window{font-size:clamp(6rem,32vw,14rem);height:1.15em;margin-top:-.575em}
  .forum-word{left:0;font-size:inherit}
+ .has-motion .word-window{top:calc(100% + .31em - clamp(12px,2.5svh,24px))}
  html:not(.has-motion) .word-window{height:16vw;margin-top:-8vw}
  html:not(.has-motion) .forum-word{width:100%;text-align:center;font-size:min(10.2vw,6rem)}
+}
+@media(max-width:740px) and (max-height:530px),(hover:none) and (max-height:530px){
+ .hero-copy{top:max(64px,20svh);width:min(88%,42rem)}
+ .hero-copy h1{font-size:clamp(1.8rem,11svh,3rem);margin:.12em 0}
+ .hero-copy .hero-actions{margin-top:10px}
 }
 @keyframes levitate-soft{from{transform:translateY(0)}to{transform:translateY(-6px)}}
 @media(max-width:420px){.forum-date{font-size:.94rem}.orb-award{left:90%;top:28%}.forum-deck{max-width:23em}}
