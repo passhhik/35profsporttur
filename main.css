@@ -96,14 +96,17 @@ a{color:inherit}
 .orb-archive{left:2.72%;top:42.94%;--delay:-1.4s;--float-time:7.9s}
 @media(min-width:741px) and (hover:hover){
  .orb-group .orb-caption{
-   --caption-top:calc(var(--header-height) + var(--stage-h) * .0436 - clamp(16px,1.667vw,32px) + 13px);
-   display:block;align-self:start;width:77%;margin-top:var(--caption-top);
-   max-height:max(44px,calc(90cqi - var(--caption-top)));overflow-y:auto;overscroll-behavior-y:contain;
-   scrollbar-width:thin;font-size:clamp(.68rem,3.6cqi,.875rem);line-height:1.28;
+   --caption-top:calc(var(--header-height) + var(--stage-h) * .0436 + 13px - var(--header-bottom-padding,0px));
+   display:grid;justify-items:center;align-content:safe center;align-self:start;
+   width:min(309px,89.4cqi);height:max(44px,calc(90cqi - var(--caption-top)));margin-top:var(--caption-top);
+   gap:5px;text-align:center;text-shadow:0 1px 3px #0009;overflow-y:auto;overscroll-behavior-y:contain;
+   scrollbar-width:thin;scrollbar-gutter:stable both-edges;
  }
- .orb-group .orb-details{display:block;margin-top:4px}
+ .orb-group .orb-title{font-size:clamp(12px,4.63cqi,16px);font-weight:700;line-height:1.2;text-wrap:wrap}
+ .orb-group .orb-details{width:min(266px,77.1cqi,100%);margin:0;font-size:clamp(11px,4.05cqi,14px);font-weight:500;line-height:1.4;text-wrap:wrap}
  .orb-group.showing .orb-caption{pointer-events:auto}
 }
+@media(min-width:1121px){.orb-group .orb-caption{--header-bottom-padding:clamp(16px,1.667vw,32px)}}
 .forum-header{position:fixed;inset:0 0 auto;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;padding:clamp(16px,1.667vw,32px) 2.778%;isolation:isolate;z-index:20}
 .forum-header::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:url("assets/header-surface.png") center/100% 100%}
 .forum-header:not(.is-scrolled):not(.menu-open){pointer-events:none}
