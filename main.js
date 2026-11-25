@@ -6,7 +6,11 @@
   const wordWindow = document.querySelector('.word-window');
   const orbs = Array.from(document.querySelectorAll('.orb-slot'));
   const copy = document.querySelector('.hero-copy');
+  const memories = document.querySelector('.memories');
+  const history = document.getElementById('history');
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
+  const decorativeOrbs = matchMedia('(max-width: 740px), (hover: none)');
+  const compactNavigation = matchMedia('(max-width: 1120px)');
   const header = document.querySelector('.forum-header');
   const menu = document.getElementById('forum-navigation');
   const navSections = Array.from(menu.querySelectorAll('a'), link => ({
@@ -15,6 +19,10 @@
   })).sort((a, b) => a.section.compareDocumentPosition(b.section) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1);
   let activeSection;
   const toggle = document.querySelector('.nav-toggle');
+  const drawerClose = menu.querySelector('.nav-close');
+  const backdrop = header.querySelector('.nav-backdrop');
+  const drawerItems = Array.from(menu.querySelectorAll('button, a[href]'));
+  const behindMenu = document.querySelectorAll('main, .skip-link, .brand, .nav-toggle');
   const limit = value => Math.min(1, Math.max(0, value));
   const smooth = value => value * value * (3 - 2 * value);
   const flights = orbs.map(slot => ({
@@ -31,6 +39,9 @@
   let previousFrame = 0;
   let wordProgress = 0;
   let previousProgress = -1;
+  let navigationScroll;
+  let navigationTimer;
+  let menuOpen = false;
   let metrics;
 
   function closePhoto() {
@@ -44,7 +55,7 @@
   }
 
   function showPhoto(button) {
-    if (button === activePhoto) return;
+    if (decorativeOrbs.matches || button === activePhoto) return;
     closePhoto();
     // Keep both image states and their caption in the same moving circle.
     button.style.setProperty('--active-photo', 'url("' + button.dataset.activeImage + '")');
@@ -68,7 +79,8 @@
     button.addEventListener('blur', () => {
       if (activePhoto === button) closePhoto();
     });
-    button.addEventListener('click', () => {
+    button.addEventListener('click', event => {
+      if (decorativeOrbs.matches || event.pointerType === 'touch') return;
       if (pinned && activePhoto === button) {
         closePhoto();
       } else {
@@ -80,26 +92,51 @@
   document.addEventListener('pointerdown', event => {
     if (activePhoto && !event.target.closest('.orb-float')) closePhoto();
   });
+  function updateOrbInteraction() {
+    closePhoto();
+    memories.inert = decorativeOrbs.matches;
+  }
+  decorativeOrbs.addEventListener('change', () => {
+    updateOrbInteraction();
+    measure();
+  });
+  updateOrbInteraction();
+  new IntersectionObserver(([entry]) => {
+    stage.classList.toggle('is-outside', !entry.isIntersecting);
+  }).observe(stage);
 
-  function setMenu(open) {
+  function setMenu(open, restoreFocus = true) {
+    const wasOpen = menuOpen;
+    menuOpen = open && compactNavigation.matches;
+    open = menuOpen;
     header.classList.toggle('menu-open', open);
+    root.classList.toggle('has-open-menu', open);
+    menu.inert = compactNavigation.matches && !open;
+    for (const element of behindMenu) element.inert = open;
     toggle.setAttribute('aria-expanded', String(open));
     toggle.setAttribute('aria-label', open ? 'Закрыть меню' : 'Открыть меню');
+    if (open) drawerClose.focus({preventScroll:true});
+    else if (wasOpen && restoreFocus && compactNavigation.matches) toggle.focus({preventScroll:true});
   }
-  toggle.addEventListener('click', () => setMenu(!header.classList.contains('menu-open')));
-  menu.addEventListener('click', event => { if (event.target.closest('a')) setMenu(false); });
-  document.addEventListener('click', event => {
-    if (!header.contains(event.target)) setMenu(false);
+  toggle.addEventListener('click', () => setMenu(!menuOpen));
+  drawerClose.addEventListener('click', () => setMenu(false));
+  backdrop.addEventListener('click', () => setMenu(false));
+  menu.addEventListener('click', event => {
+    if (menuOpen && event.target.closest('a')) setMenu(false);
   });
-  header.addEventListener('focusout', event => {
-    if (!header.contains(event.relatedTarget)) setMenu(false);
-  });
+  compactNavigation.addEventListener('change', () => setMenu(false));
+  setMenu(false);
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape') closePhoto();
-    if (event.key === 'Escape' && header.classList.contains('menu-open')) {
-      setMenu(false);
-      toggle.focus();
-    }
+    if (!menuOpen) return;
+    if (event.key === 'Escape') setMenu(false);
+    if (event.key !== 'Tab') return;
+    const first = drawerItems[0];
+    const last = drawerItems.at(-1);
+    const atEdge = event.shiftKey ? document.activeElement === first : document.activeElement === last;
+    if (!atEdge) return;
+    event.preventDefault();
+    (event.shiftKey ? last : first).focus();
   });
 
   function updateNavigation() {
@@ -122,7 +159,7 @@
 
   function measure() {
     closePhoto();
-    root.classList.toggle('has-motion', !motion.matches);
+    root.classList.toggle('has-motion', animatesHero());
     const box = intro.getBoundingClientRect();
     const stageHeight = stage.offsetHeight;
     metrics = {
@@ -133,21 +170,33 @@
       wordTravel: Math.max(0, word.offsetWidth - wordWindow.clientWidth)
     };
     cancelAnimationFrame(frame);
+    for (const flight of flights) flight.phase = undefined;
     previousProgress = -1;
     update(performance.now(), true);
   }
+  function animatesHero() {
+    return !motion.matches && !decorativeOrbs.matches;
+  }
   function update(now, snap = false) {
     frame = 0;
-    updateNavigation();
-    const progress = motion.matches ? 0 : limit((scrollY - metrics.top) / metrics.distance);
+    if (snap || scrollY !== navigationScroll) {
+      navigationScroll = scrollY;
+      updateNavigation();
+    }
+    const progress = animatesHero() ? limit((scrollY - metrics.top) / metrics.distance) : 0;
     if (progress !== previousProgress) {
-      root.style.setProperty('--history-lead', ((progress - 1) * metrics.distance).toFixed(2) + 'px');
-      for (const {slot, start, end, drift, lift} of flights) {
+      history.style.setProperty('--history-lead', ((progress - 1) * metrics.distance).toFixed(2) + 'px');
+      for (const flight of flights) {
+        const {slot, start, end, drift, lift} = flight;
         const phase = smooth(limit((progress - start) / (end - start)));
+        if (phase === flight.phase) continue;
+        flight.phase = phase;
         const opacity = 1 - smooth(limit((phase - .76) / .24));
-        slot.style.setProperty('--lift-y', (-metrics.height * phase * lift).toFixed(2) + 'px');
-        slot.style.setProperty('--drift-x', (metrics.width * phase * drift).toFixed(2) + 'px');
-        slot.style.setProperty('--orb-opacity', String(opacity));
+        const x = (metrics.width * phase * drift).toFixed(2);
+        const y = (-metrics.height * phase * lift).toFixed(2);
+        slot.style.transform = phase ? `translate3d(${x}px,${y}px,0)` : '';
+        slot.style.opacity = String(opacity);
+        slot.classList.toggle('is-flown', opacity === 0);
         slot.inert = opacity < .05;
       }
       copy.style.opacity = String(1 - smooth(limit((progress - .55) / .32)));
@@ -167,15 +216,21 @@
     if (wordProgress !== target) frame = requestAnimationFrame(update);
   }
   function queue() {
+    if (!animatesHero()) {
+      if (!navigationTimer) {
+        navigationTimer = setTimeout(() => {
+          navigationTimer = undefined;
+          updateNavigation();
+        }, 80);
+      }
+      return;
+    }
     closePhoto();
     if (!frame) frame = requestAnimationFrame(update);
   }
   motion.addEventListener('change', measure);
   document.fonts.ready.then(measure);
-  window.addEventListener('resize', () => {
-    if (!toggle.offsetWidth) setMenu(false);
-    measure();
-  }, { passive:true });
+  window.addEventListener('resize', measure, { passive:true });
   window.addEventListener('scroll', queue, { passive:true });
   window.addEventListener('pageshow', measure);
   measure();

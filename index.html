@@ -2,21 +2,22 @@
 <html lang="ru">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="light">
   <meta name="theme-color" content="#f3eee5">
   <title>35 лет Профспорттуру РФ — юбилейный форум в Новогорске</title>
   <meta name="description" content="Юбилейный форум Профспорттура РФ, 10–12 декабря 2026 года. История профсоюза, программа и карта площадок Новогорска для гостей.">
   <link rel="preload" as="font" href="assets/manrope.woff" type="font/woff" crossorigin>
   <link rel="preload" as="font" href="assets/cormorant.woff" type="font/woff" crossorigin>
-  <link rel="stylesheet" href="main.css">
-  <link rel="stylesheet" href="history.css">
-  <link rel="stylesheet" href="programme.css">
-  <link rel="stylesheet" href="venue.css">
+  <link rel="stylesheet" href="main.css?v=20261125-mobile">
+  <link rel="stylesheet" href="history.css?v=20261125-mobile">
+  <link rel="stylesheet" href="programme.css?v=20261125-mobile">
+  <link rel="stylesheet" href="venue.css?v=20261125-mobile">
   <link rel="stylesheet" href="footer.css">
-  <script src="main.js" defer></script>
-  <script src="history.js" defer></script>
+  <script src="main.js?v=20261125-mobile" defer></script>
+  <script src="history.js?v=20261125-mobile" defer></script>
   <script src="programme.js" defer></script>
-  <script src="venue.js" defer></script>
+  <script src="venue.js?v=20261125-mobile" defer></script>
 </head>
 <body>
   <a class="skip-link" href="#programme">Перейти к программе</a>
@@ -25,7 +26,11 @@
       <img src="assets/forum-brand.svg" width="200" height="72" alt="Профспорттур РФ">
     </a>
     <button class="nav-toggle" type="button" aria-controls="forum-navigation" aria-expanded="false" aria-label="Открыть меню"><span></span><span></span></button>
+    <div class="nav-backdrop" aria-hidden="true"></div>
     <nav id="forum-navigation" class="forum-nav" aria-label="Разделы форума">
+      <button class="nav-close" type="button" aria-label="Закрыть меню">
+        <svg width="23" height="23" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+      </button>
       <div class="header-links">
         <a href="#history">История</a>
         <a href="#venue">Карта пространства</a>
@@ -43,8 +48,11 @@
         <div class="hero-clip">
           <div class="memories" role="group" aria-label="Фотографии из истории Профспорттура">
             <div class="orb-slot orb-podium" data-start="0.032" data-end="0.226" data-drift="0.038" data-lift="1.1">
-              <button type="button" class="orb-float" aria-labelledby="orb-title-podium" aria-expanded="false" aria-controls="orb-caption-podium" data-active-image="assets/orb-podium-hover.png">
-                <img alt="" src="assets/orb-podium.png" width="692" height="692">
+              <button type="button" class="orb-float" aria-labelledby="orb-title-podium" aria-expanded="false" aria-controls="orb-caption-podium" data-active-image="assets/orb-podium-hover.webp">
+                <picture class="orb-photo">
+                  <source media="(max-width: 740px)" srcset="assets/orb-podium-mobile.webp">
+                  <img alt="" src="assets/orb-podium.webp" width="480" height="480" decoding="async">
+                </picture>
                 <span class="orb-caption" id="orb-caption-podium" aria-hidden="true">
                   <strong class="orb-title" id="orb-title-podium">IV Московская спартакиада работников спорта</strong>
                   <span class="orb-details" id="orb-details-podium">Москва, осень 2025 года. Четвёртая городская спартакиада работников физической культуры и спорта прошла в два этапа: 27 сентября в Учебно-спортивном центре «Труд» и 18 октября в Олимпийском центре имени братьев Знаменских.</span>
@@ -52,8 +60,11 @@
               </button>
             </div>
             <div class="orb-slot orb-team" data-start="0.224" data-end="0.454" data-drift="-0.032" data-lift="1.12">
-              <button type="button" class="orb-float" aria-labelledby="orb-title-team" aria-expanded="false" aria-controls="orb-caption-team" data-active-image="assets/orb-team-hover.png">
-                <img alt="" src="assets/orb-team.png" width="692" height="692">
+              <button type="button" class="orb-float" aria-labelledby="orb-title-team" aria-expanded="false" aria-controls="orb-caption-team" data-active-image="assets/orb-team-hover.webp">
+                <picture class="orb-photo">
+                  <source media="(max-width: 740px)" srcset="assets/orb-team-mobile.webp">
+                  <img alt="" src="assets/orb-team.webp" width="480" height="480" decoding="async">
+                </picture>
                 <span class="orb-caption" id="orb-caption-team" aria-hidden="true">
                   <strong class="orb-title" id="orb-title-team">Первые спортивные молодёжные игры МФП</strong>
                   <span class="orb-details" id="orb-details-team">Москва, 17 сентября 2017 года. На стадионе имени братьев Знаменских прошли первые молодёжные игры Московской Федерации профсоюзов. Команда ТГК «Измайлово», которую представлял Моспрофспорттур.</span>
@@ -61,8 +72,11 @@
               </button>
             </div>
             <div class="orb-slot orb-group" data-start="0.009" data-end="0.193" data-drift="-0.052" data-lift="0.95">
-              <button type="button" class="orb-float" aria-labelledby="orb-title-group" aria-expanded="false" aria-controls="orb-caption-group" data-active-image="assets/orb-group-hover.png">
-                <img alt="" src="assets/orb-group.png" width="692" height="692">
+              <button type="button" class="orb-float" aria-labelledby="orb-title-group" aria-expanded="false" aria-controls="orb-caption-group" data-active-image="assets/orb-group-hover.webp">
+                <picture class="orb-photo">
+                  <source media="(max-width: 740px)" srcset="assets/orb-group-mobile.webp">
+                  <img alt="" src="assets/orb-group.webp" width="480" height="480" decoding="async">
+                </picture>
                 <span class="orb-caption" id="orb-caption-group" aria-hidden="true">
                   <strong class="orb-title" id="orb-title-group">VII съезд Профспорттура</strong>
                   <span class="orb-details" id="orb-details-group">Москва, 6 ноября 2020 года. На VII съезде Профспорттура собрались 70 делегатов из 39 регионов России. Часть делегатов участвовала по видеосвязи.</span>
@@ -70,8 +84,11 @@
               </button>
             </div>
             <div class="orb-slot orb-award" data-start="0.123" data-end="0.333" data-drift="0.062" data-lift="1.08">
-              <button type="button" class="orb-float" aria-labelledby="orb-title-award" aria-expanded="false" aria-controls="orb-caption-award" data-active-image="assets/orb-award-hover.png">
-                <img alt="" src="assets/orb-award.png" width="692" height="692">
+              <button type="button" class="orb-float" aria-labelledby="orb-title-award" aria-expanded="false" aria-controls="orb-caption-award" data-active-image="assets/orb-award-hover.webp">
+                <picture class="orb-photo">
+                  <source media="(max-width: 740px)" srcset="assets/orb-award-mobile.webp">
+                  <img alt="" src="assets/orb-award.webp" width="480" height="480" decoding="async">
+                </picture>
                 <span class="orb-caption" id="orb-caption-award" aria-hidden="true">
                   <strong class="orb-title" id="orb-title-award">30 лет Профспорттуру</strong>
                   <span class="orb-details" id="orb-details-award">24 декабря 2021 года. Председатель Моспрофспорттура Юлия Дедкова и заместитель председателя ФНПР Давид Кришталь на заседании Центрального комитета к 30-летию Профспорттура РФ.</span>
@@ -79,8 +96,11 @@
               </button>
             </div>
             <div class="orb-slot orb-flowers" data-start="0.269" data-end="0.496" data-drift="0.025" data-lift="1.13">
-              <button type="button" class="orb-float" aria-labelledby="orb-title-flowers" aria-expanded="false" aria-controls="orb-caption-flowers" data-active-image="assets/orb-flowers-hover.png">
-                <img alt="" src="assets/orb-flowers.png" width="692" height="692">
+              <button type="button" class="orb-float" aria-labelledby="orb-title-flowers" aria-expanded="false" aria-controls="orb-caption-flowers" data-active-image="assets/orb-flowers-hover.webp">
+                <picture class="orb-photo">
+                  <source media="(max-width: 740px)" srcset="assets/orb-flowers-mobile.webp">
+                  <img alt="" src="assets/orb-flowers.webp" width="480" height="480" decoding="async">
+                </picture>
                 <span class="orb-caption" id="orb-caption-flowers" aria-hidden="true">
                   <strong class="orb-title" id="orb-title-flowers">Галина Горохова в Кремле</strong>
                   <span class="orb-details" id="orb-details-flowers">Москва, 25 июля 2005 года. Галина Горохова на вручении государственных наград в Кремле. Трёхкратная олимпийская чемпионка по фехтованию была одной из организаторов учредительного съезда профсоюза.</span>
@@ -88,8 +108,11 @@
               </button>
             </div>
             <div class="orb-slot orb-archive" data-start="0.079" data-end="0.3" data-drift="-0.026" data-lift="1.06">
-              <button type="button" class="orb-float" aria-labelledby="orb-title-archive" aria-expanded="false" aria-controls="orb-caption-archive" data-active-image="assets/orb-archive-hover.png">
-                <img alt="" src="assets/orb-archive.png" width="692" height="692">
+              <button type="button" class="orb-float" aria-labelledby="orb-title-archive" aria-expanded="false" aria-controls="orb-caption-archive" data-active-image="assets/orb-archive-hover.webp">
+                <picture class="orb-photo">
+                  <source media="(max-width: 740px)" srcset="assets/orb-archive-mobile.webp">
+                  <img alt="" src="assets/orb-archive.webp" width="480" height="480" decoding="async">
+                </picture>
                 <span class="orb-caption" id="orb-caption-archive" aria-hidden="true">
                   <strong class="orb-title" id="orb-title-archive">Олимпийский пьедестал</strong>
                   <span class="orb-details" id="orb-details-archive">Инсбрук, 1 февраля 1964 года. Лидия Скобликова с золотой медалью на пьедестале зимних Олимпийских игр.</span>
@@ -111,13 +134,13 @@
 <div id="history" class="hs-scroll">
 <section class="hs" data-year="1991" aria-label="История Профспорттура" aria-roledescription="карусель" tabindex="0">
   <div class="hs-images" aria-hidden="true">
-    <div class="hs-image hs-image-1991 is-current"><img src="assets/history-1991.webp" alt="" loading="lazy" decoding="async"></div>
-    <div class="hs-image hs-image-2005"><img src="assets/history-2005.webp" alt="" loading="lazy" decoding="async"></div>
-    <div class="hs-image hs-image-2015"><img src="assets/history-2015.webp" alt="" loading="lazy" decoding="async"></div>
-    <div class="hs-image hs-image-2018"><img src="assets/history-2018.webp" alt="" loading="lazy" decoding="async"></div>
-    <div class="hs-image hs-image-2022"><img src="assets/history-2022.webp" alt="" loading="lazy" decoding="async"></div>
-    <div class="hs-image hs-image-2025"><img src="assets/history-2025.webp" alt="" loading="lazy" decoding="async"></div>
-    <div class="hs-image hs-image-2026"><img src="assets/history-2026.webp" alt="" loading="lazy" decoding="async"></div>
+    <div class="hs-image hs-image-1991 is-current"><picture><source media="(max-width: 800px), (pointer: coarse)" srcset="assets/history-1991-mobile.webp"><img src="assets/history-1991.webp" alt="" loading="lazy" decoding="async"></picture></div>
+    <div class="hs-image hs-image-2005"><picture><source media="(max-width: 800px), (pointer: coarse)" data-srcset="assets/history-2005-mobile.webp"><img data-src="assets/history-2005.webp" alt="" loading="lazy" decoding="async"></picture></div>
+    <div class="hs-image hs-image-2015"><picture><source media="(max-width: 800px), (pointer: coarse)" data-srcset="assets/history-2015-mobile.webp"><img data-src="assets/history-2015.webp" alt="" loading="lazy" decoding="async"></picture></div>
+    <div class="hs-image hs-image-2018"><picture><source media="(max-width: 800px), (pointer: coarse)" data-srcset="assets/history-2018-mobile.webp"><img data-src="assets/history-2018.webp" alt="" loading="lazy" decoding="async"></picture></div>
+    <div class="hs-image hs-image-2022"><picture><source media="(max-width: 800px), (pointer: coarse)" data-srcset="assets/history-2022-mobile.webp"><img data-src="assets/history-2022.webp" alt="" loading="lazy" decoding="async"></picture></div>
+    <div class="hs-image hs-image-2025"><picture><source media="(max-width: 800px), (pointer: coarse)" data-srcset="assets/history-2025-mobile.webp"><img data-src="assets/history-2025.webp" alt="" loading="lazy" decoding="async"></picture></div>
+    <div class="hs-image hs-image-2026"><picture><source media="(max-width: 800px), (pointer: coarse)" data-srcset="assets/history-2026-mobile.webp"><img data-src="assets/history-2026.webp" alt="" loading="lazy" decoding="async"></picture></div>
   </div>
   <div class="hs-cards">
     <article class="hs-card" data-year="1991" style="--hs-start:0;--hs-copy:32.8125rem" aria-hidden="false" aria-roledescription="слайд" aria-label="1 из 7">
@@ -356,22 +379,6 @@
     </button>
     </article>
   </div>
-  <dialog class="venue-lightbox" aria-labelledby="venue-photo-title">
-    <div class="venue-lightbox-inner">
-      <div class="venue-lightbox-header">
-        <h2 id="venue-photo-title"></h2>
-        <a class="venue-photo-source" target="_blank" rel="noopener" aria-label="Источник фотографии" title="Источник фотографии">
-          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6m0-6-10 10"/><path d="M10 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-4"/></svg>
-        </a>
-        <button type="button" class="venue-lightbox-close" autofocus aria-label="Закрыть фотографию">×</button></div>
-      <span class="venue-photo-status" role="status"></span>
-      <div class="venue-large-image">
-        <img class="venue-full-photo" alt="">
-        <button type="button" class="venue-image-step venue-prev" data-step="-1" aria-label="Предыдущая фотография"><img src="assets/gallery-prev.svg" width="24" height="24" alt=""></button>
-        <button type="button" class="venue-image-step venue-next" data-step="1" aria-label="Следующая фотография"><img src="assets/gallery-next.svg" width="24" height="24" alt=""></button>
-      </div>
-    </div>
-  </dialog>
 </section>
 <section class="venue-directions" id="directions" aria-labelledby="directions-heading">
   <h2 id="directions-heading">Как проехать?</h2>

@@ -319,7 +319,6 @@ function createGuestMap({scene, zoomIn, zoomOut, onSelect, onReset, initialSelec
   scene.setAttribute('aria-label', 'Карта дня заезда. Выберите здание. Клавиши плюс и минус меняют масштаб, стрелки передвигают карту, Home возвращает к обзору.');
   scene.style.touchAction = 'pan-y';
   scene.style.userSelect = 'none';
-  const accent = '#82603c', dark = '#463526', cream = '#fffaf1';
   const materials = make('defs',{},scene);
   function gradient(id, colours, horizontal=false) {
     const paint = make('linearGradient',{id, x1:'0%', y1:'0%', x2:horizontal?'100%':'15%', y2:'100%'},materials);
@@ -336,7 +335,7 @@ function createGuestMap({scene, zoomIn, zoomOut, onSelect, onReset, initialSelec
   ]) gradient('ng-wall-'+tag,[['0%',top],['100%',bottom]]);
 
   const buildings = {
-    sok2: {name:'СОК 2', landmark:[1132,325], anchor:[1123,324], height:17, labelOffset:[35,-24], ids:[9]},
+    sok2: {name:'СОК 2', anchor:[1123,324], height:17, labelOffset:[35,-24], ids:[9]},
     sok3: {name:'СОК 3', entry:[991,278], towards:[1005,293], anchor:[1007,347], height:16, labelOffset:[-32,-15], ids:[10]},
     winter: {name:'Центр зимних видов спорта', entry:[1293,658], towards:[1271,652], anchor:[1172,661], height:7, labelOffset:[0,34], ids:[22,23,0]}
   };
@@ -355,19 +354,11 @@ function createGuestMap({scene, zoomIn, zoomOut, onSelect, onReset, initialSelec
   make('image',{x:100,y:-160,width:1500,height:1140,href:'assets/map-grounds.svg',preserveAspectRatio:'none'},ground);
   const shade = make('g', {'pointer-events':'none'}, world);
   const solids = make('g', {}, world);
-  const guide = make('g', {'aria-hidden':'true', 'pointer-events':'none'}, scene);
   const contextLabels = make('g', {'aria-hidden':'true', 'pointer-events':'none'}, scene);
   const labels = make('g', {}, scene);
   const entranceLayer = make('g', {'pointer-events':'none','aria-hidden':'true',class:'venue-entry-pin'}, scene);
-  const entranceArrow = make('g',{class:'venue-entry-arrow'},entranceLayer);
-  // The nose touches the facade. Its direction is projected with the same camera as the site plan.
-  make('path',{d:'M0 0 -13 -10 -12 -4.2 -25 -4.2 -25 4.2 -12 4.2 -13 10Z',
-    fill:'#35806a',stroke:'#fffdf6','stroke-width':4.5,'stroke-linejoin':'round'},entranceArrow);
-  make('path',{d:'M0 0 -13 -10 -12 -4.2 -25 -4.2 -25 4.2 -12 4.2 -13 10Z',
-    fill:'#2e765f',stroke:'#255c4d','stroke-width':1.15,'stroke-linejoin':'round'},entranceArrow);
-  const landmark = make('g',{class:'venue-landmark-pin'},entranceLayer);
-  make('circle',{r:6,fill:'#825f3b',stroke:'#fffaf1','stroke-width':1.4},landmark);
-  make('circle',{r:2,fill:'#fffaf1'},landmark);
+  // Кончик стрелки совпадает с точкой входа, а размер остаётся постоянным при зуме.
+  make('path',{class:'venue-entry-arrow',d:'M0 0 -10 -8 -10 -3 -22 -3 -22 3 -10 3 -10 8Z'},entranceLayer);
   const parts = [WINTER_LINK, ...PLACES.filter(p => p.id!==24).flatMap(p =>
     [p,...(p.annexes||[]).map(annex => ({...annex,id:p.id,marker:annex.marker || p.marker,annex:true}))])];
   parts.sort((a,b) => Number(Boolean(a.height))-Number(Boolean(b.height)) ||
@@ -422,20 +413,20 @@ function createGuestMap({scene, zoomIn, zoomOut, onSelect, onReset, initialSelec
   const overview=bounds([...paths.values()].flat());
   for(const [key, vertices] of paths) byKey.set(key,bounds(vertices));
   for(const [key,b] of Object.entries(buildings)) {
-    const line=make('line',{stroke:accent,'stroke-width':1.5},guide);
-    const dot=make('circle',{r:3.3,fill:accent,stroke:cream,'stroke-width':1.2},guide);
     const control=make('g', {'data-map-label':key,role:'button',tabindex:0,'aria-label':b.name,'aria-pressed':'false'}, labels);
     const w = key === 'winter' ? 208 : 60;
     const hit = make('rect', {x:-w/2-1,y:-22,width:w+2,height:44,rx:22,fill:'transparent'}, control);
     const pill = addMapPill(control, b.name, w, 32);
     control.addEventListener('click', () => {if(!skipClick) notifySelect(key)});
     control.addEventListener('keydown', e => {if (e.key==='Enter'||e.key===' ') {e.preventDefault();notifySelect(key)}});
-    pins.set(key,{...pill,control,hit,line,dot,anchor:project(b.anchor,m,b.height),offset:b.labelOffset});
+    pins.set(key,{...pill,control,hit,anchor:project(b.anchor,m,b.height),offset:b.labelOffset});
   }
   let width=0,height=0,scale=1,cx=0,cy=0,minScale=1,selection=initialSelection,manual=false,skipClick=false;
   let cameraFrame=0;
   let cameraTarget=null;
+  let rankedPins=[];
   const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const touchPointer = window.matchMedia('(pointer: coarse)');
   function stopCamera(){cancelAnimationFrame(cameraFrame);cameraFrame=0;}
   const clamp=(value,min,max)=>Math.max(min,Math.min(value,max));
   const worldAt=([x,y])=>[(x-width/2)/scale+cx,(y-height/2)/scale+cy];
@@ -453,42 +444,35 @@ function createGuestMap({scene, zoomIn, zoomOut, onSelect, onReset, initialSelec
   function updateBuildings() {
     for(const o of shapes){
       const active=!!o.key&&o.key===selection;
+      if(o.active===active)continue;
+      o.active=active;
       const material=active?'active':o.key==='winter'?'ice':o.key?'hotel':'neighbour';
       o.roof.setAttribute('fill',o.p.height?`url(#ng-roof-${material})`:(o.p.roofColor||'#e6e7dd'));
       o.roof.setAttribute('stroke',active?'#8b633d':o.key?'#a28d71':'#a9aaa0');
       o.roof.setAttribute('stroke-width',o.key?1.55:.8);
       paintFacades(o,m,active,project);
     }
-    for(const [key,{control,dot,line}] of pins) {
-      const active=key===selection;
-      control.setAttribute('aria-pressed',String(active));
-      dot.setAttribute('fill',active?dark:accent);
-      line.setAttribute('stroke',active?dark:accent);
+    for(const [key,{control}] of pins) {
+      control.setAttribute('aria-pressed',String(key===selection));
     }
+    rankedPins=[...pins.entries()].sort(([a],[b])=>Number(b===selection)-Number(a===selection));
   }
   function draw() {
     world.setAttribute('transform','translate('+width/2+' '+height/2+') scale('+scale+') translate('+(-cx)+' '+(-cy)+')');
     const positions=[];
     const place=buildings[selection];
-    const marker=place&&(place.entry||place.landmark);
-    entranceLayer.style.display=marker?'':'none';
-    if(marker){
-      const [x,y]=screenAt(project(marker,m));
-      entranceLayer.setAttribute('transform',`translate(${x} ${y})`);
-      entranceArrow.style.display=place.entry?'':'none';
-      landmark.style.display=place.landmark?'':'none';
-      if(place.entry){
-        const [tx,ty]=screenAt(project(place.towards,m));
-        const direction=Math.atan2(ty-y,tx-x);
-        entranceArrow.setAttribute('transform',`rotate(${direction*180/Math.PI})`);
-        positions.push({x:x-14*Math.cos(direction),y:y-14*Math.sin(direction),w:34});
-      } else positions.push({x,y,w:20});
+    entranceLayer.style.display=place?.entry?'':'none';
+    if(place?.entry){
+      const [x,y]=screenAt(project(place.entry,m));
+      const [tx,ty]=screenAt(project(place.towards,m));
+      const direction=Math.atan2(ty-y,tx-x);
+      entranceLayer.setAttribute('transform',`translate(${x} ${y}) rotate(${direction*180/Math.PI})`);
+      positions.push({x:x-11*Math.cos(direction),y:y-11*Math.sin(direction),w:26});
     }
-    const ranked=[...pins.entries()].sort(([a],[b])=> Number(b===selection)-Number(a===selection));
-    for(const [key,pin] of ranked){
+    for(const [,pin] of rankedPins){
       const [ax,ay]=screenAt(pin.anchor);
       const inFrame=ax>=0&&ax<=width&&ay>=0&&ay<=height;
-      [pin.control,pin.dot,pin.line].forEach(el=>el.setAttribute('visibility',inFrame?'visible':'hidden'));
+      pin.control.setAttribute('visibility',inFrame?'visible':'hidden');
       if(!inFrame)continue;
       const x=clamp(ax+pin.offset[0],pin.w/2+6,width-pin.w/2-6);
       const desiredY=ay+pin.offset[1];
@@ -501,9 +485,6 @@ function createGuestMap({scene, zoomIn, zoomOut, onSelect, onReset, initialSelec
       }
       positions.push({x,y,w:pin.w});
       pin.control.setAttribute('transform','translate('+x+' '+y+')');
-      pin.line.setAttribute('x1',ax);pin.line.setAttribute('y1',ay);
-      pin.line.setAttribute('x2',x);pin.line.setAttribute('y2',y);
-      pin.dot.setAttribute('cx',ax);pin.dot.setAttribute('cy',ay);
     }
     for(const item of context){
       const [x,y]=screenAt(item.point);
@@ -517,11 +498,12 @@ function createGuestMap({scene, zoomIn, zoomOut, onSelect, onReset, initialSelec
     }
     if(zoomIn)zoomIn.disabled=scale>=minScale*4-.001;
     if(zoomOut)zoomOut.disabled=scale<=minScale+.001;
-    scene.style.cursor=scale>minScale+.001?'grab':'default';
+    scene.style.cursor=pointers.size&&wasDragged?'grabbing':scale>minScale+.001?'grab':'default';
   }
   function resize() {
+    const w=scene.clientWidth,h=scene.clientHeight;
+    if(!w||!h||(w===width&&h===height))return;
     stopCamera();
-    const w=scene.clientWidth,h=scene.clientHeight;if(!w||!h)return;
     const relativeZoom=scale/minScale;
     width=w;height=h;
     scene.setAttribute('viewBox','0 0 '+width+' '+height);
@@ -541,9 +523,10 @@ function createGuestMap({scene, zoomIn, zoomOut, onSelect, onReset, initialSelec
     selection=key;cameraTarget=key;fit();updateBuildings();
     const end={cx,cy,scale};
     if(motion.matches || !width){draw();return;}
+    const duration=touchPointer.matches?320:530;
     const started=performance.now();
     function frame(now){
-      const pct=clamp((now-started)/530,0,1), t=1-Math.pow(1-pct,3);
+      const pct=clamp((now-started)/duration,0,1), t=1-Math.pow(1-pct,3);
       cx=start.cx+(end.cx-start.cx)*t;cy=start.cy+(end.cy-start.cy)*t;
       scale=start.scale+(end.scale-start.scale)*t;draw();
       if(pct<1)cameraFrame=requestAnimationFrame(frame);
@@ -582,7 +565,7 @@ function createGuestMap({scene, zoomIn, zoomOut, onSelect, onReset, initialSelec
     }
   });
   const pointers=new Map();
-  let gesture=null,wasDragged=false,suppressTimer;
+  let gesture=null,wasDragged=false,suppressTimer,dragFrame=0;
   const local=e=>{const r=scene.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]};
   function measure(){
     const pts=[...pointers.values()].slice(0,2);
@@ -619,12 +602,20 @@ function createGuestMap({scene, zoomIn, zoomOut, onSelect, onReset, initialSelec
     if(!scene.hasPointerCapture(e.pointerId))scene.setPointerCapture(e.pointerId);
     scale=gesture.distance?clamp(gesture.scale*distance/gesture.distance,minScale,minScale*4):gesture.scale;
     cx=gesture.origin[0]-(point[0]-width/2)/scale;cy=gesture.origin[1]-(point[1]-height/2)/scale;
-    constrain();draw();scene.style.cursor='grabbing';
+    constrain();
+    if(!dragFrame)dragFrame=requestAnimationFrame(()=>{
+      dragFrame=0;
+      draw();
+    });
   });
   function lift(e){
     if(!pointers.delete(e.pointerId))return;
     beginGesture();
-    if(!pointers.size&&wasDragged){suppressTimer=setTimeout(()=>{skipClick=false},0);draw();}
+    if(!pointers.size&&wasDragged){
+      cancelAnimationFrame(dragFrame);dragFrame=0;
+      suppressTimer=setTimeout(()=>{skipClick=false},0);
+      draw();
+    }
   }
   scene.addEventListener('pointerup',lift);scene.addEventListener('pointercancel',lift);
   scene.addEventListener('pointerleave',e=>{if(!scene.hasPointerCapture(e.pointerId))lift(e)});
@@ -655,7 +646,6 @@ const hotelPage = 'https://novogorsksport.ru/prozhivanie/nomernoj-fond/';
 const icePage = 'https://novogorsksport.ru/sportsoourzheniya/ledovye-areny/';
 const venues = {
   sok2: {
-    name: 'СОК 2',
     photos: [
       ['venue-sok2', 'Фасад со стороны пруда', hotelPage],
       ['venue-hall-main', 'Конференц-зал с амфитеатром', 'https://novogorsksport.ru/sportsoourzheniya/konferenc-zal/'],
@@ -663,7 +653,6 @@ const venues = {
     ]
   },
   winter: {
-    name: 'Центр зимних видов спорта',
     photos: [
       ['venue-winter-facade', 'Фасад Центра зимних видов спорта', hotelPage],
       ['venue-ice-panorama', 'Большая ледовая арена', icePage],
@@ -671,7 +660,6 @@ const venues = {
     ]
   },
   sok3: {
-    name: 'СОК 3',
     photos: [
       ['venue-sok3', 'Вход под круглым козырьком', hotelPage],
       ['venue-sok3-lobby', 'Лобби-бар на втором этаже СОК 3', 'https://novogorsksport.ru/tochki_pitaniya/sok-4-obedennyj-zal/'],
@@ -683,45 +671,31 @@ const section = document.getElementById('venue');
 const scene = document.getElementById('venue-scene');
 const reset = document.getElementById('venue-reset');
 const controls = Array.from(section.querySelectorAll('.venue-card-trigger'));
-const dialog = section.querySelector('.venue-lightbox');
-const fullPhoto = dialog.querySelector('.venue-full-photo');
-const fullStatus = dialog.querySelector('.venue-photo-status');
-const credit = dialog.querySelector('.venue-photo-source');
 const prefersReducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const galleries = new Map();
 let activeVenue = null;
-let returnFocus = null;
 
-// Keep directional browsing in the carousel and the expanded viewer in sync.
 function selectPhoto(key, proposed) {
   const {photos} = venues[key];
   const gallery = galleries.get(key);
   const index = (proposed + photos.length) % photos.length;
   const [file, caption, source] = photos[index];
-  const url = 'assets/' + file + '.webp';
   gallery.index = index;
-  gallery.img.src = url;
+  gallery.img.src = 'assets/' + file + '.webp';
   gallery.img.alt = caption;
-  const announcement = `Фотография ${index + 1} из ${photos.length}. ${caption}`;
-  gallery.status.textContent = announcement;
-  gallery.opener.setAttribute('aria-label', 'Увеличить фотографию. ' + caption);
+  gallery.status.textContent = `Фотография ${index + 1} из ${photos.length}. ${caption}`;
+  gallery.credit.href = source;
+  gallery.credit.title = file === 'venue-ice-panorama' ? 'Источник фото: Олег Наумов / УТЦ «Новогорск»' : 'Источник фото: УТЦ «Новогорск»';
+  gallery.credit.setAttribute('aria-label', gallery.credit.title);
   gallery.dots.forEach((dot, i) => {
     if (i === index) dot.setAttribute('aria-current', 'true');
     else dot.removeAttribute('aria-current');
   });
-  if (dialog.open) {
-    fullPhoto.src = url;
-    fullPhoto.alt = caption;
-    fullStatus.textContent = announcement;
-    credit.href = source;
-    credit.title = file === 'venue-ice-panorama' ? 'Источник фото: Олег Наумов / УТЦ «Новогорск»' : 'Источник фото: УТЦ «Новогорск»';
-    credit.setAttribute('aria-label', credit.title);
-  }
 }
 function step(key, direction) {
-  if (key) selectPhoto(key, galleries.get(key).index + direction);
+  selectPhoto(key, galleries.get(key).index + direction);
 }
-function enableSwipe(surface, keyForSurface) {
+function enableSwipe(surface, key) {
   let start;
   let lastSwipe = 0;
   surface.addEventListener('touchstart', event => {
@@ -738,7 +712,7 @@ function enableSwipe(surface, keyForSurface) {
     start = null;
     if (Math.abs(dx) < 44 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
     lastSwipe = performance.now();
-    step(keyForSurface(), dx < 0 ? 1 : -1);
+    step(key, dx < 0 ? 1 : -1);
   }, {passive:true});
   surface.addEventListener('click', event => {
     if (lastSwipe > 0 && performance.now() - lastSwipe < 350) {
@@ -747,21 +721,15 @@ function enableSwipe(surface, keyForSurface) {
     }
   }, true);
 }
-function openPhoto(key, opener) {
-  returnFocus = opener;
-  dialog.querySelector('h2').textContent = venues[key].name;
-  dialog.showModal();
-  selectPhoto(key, galleries.get(key).index);
-  dialog.querySelector('.venue-lightbox-close').focus({preventScroll:true});
-}
 for (const trigger of controls) {
   const key = trigger.dataset.venue;
   const region = document.getElementById(trigger.getAttribute('aria-controls'));
-  region.innerHTML = '<div class="venue-gallery-view"><button type="button" class="venue-image-open"><img alt=""></button>' +
+  region.innerHTML = '<div class="venue-gallery-view"><img class="venue-photo" alt="" loading="lazy" decoding="async" draggable="false">' +
+    '<a class="venue-photo-source" target="_blank" rel="noopener" aria-label="Источник фотографии">' +
+    '<svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6m0-6-10 10"/><path d="M10 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-4"/></svg></a>' +
     '<button type="button" class="venue-image-step venue-prev" data-step="-1" aria-label="Предыдущая фотография"><img src="assets/gallery-prev.svg" width="24" height="24" alt=""></button>' +
     '<button type="button" class="venue-image-step venue-next" data-step="1" aria-label="Следующая фотография"><img src="assets/gallery-next.svg" width="24" height="24" alt=""></button>' +
     '<div class="venue-dots"></div></div><span class="venue-photo-status" role="status"></span>';
-  const opener = region.querySelector('.venue-image-open');
   const dots = venues[key].photos.map((photo, index) => {
     const dot = document.createElement('button');
     dot.type = 'button';
@@ -771,9 +739,9 @@ for (const trigger of controls) {
     region.querySelector('.venue-dots').append(dot);
     return dot;
   });
-  galleries.set(key, {index:0, region, trigger, opener, dots,
-    img:opener.querySelector('img'), status:region.querySelector('.venue-photo-status')});
-  opener.addEventListener('click', () => openPhoto(key, opener));
+  galleries.set(key, {index:0, region, trigger, dots,
+    img:region.querySelector('.venue-photo'), credit:region.querySelector('.venue-photo-source'),
+    status:region.querySelector('.venue-photo-status')});
   region.querySelectorAll('[data-step]').forEach(button => {
     button.addEventListener('click', () => step(key, Number(button.dataset.step)));
   });
@@ -782,7 +750,7 @@ for (const trigger of controls) {
     event.preventDefault();
     step(key, event.key === 'ArrowRight' ? 1 : -1);
   });
-  enableSwipe(region.querySelector('.venue-gallery-view'), () => key);
+  enableSwipe(region.querySelector('.venue-gallery-view'), key);
 }
 
 function renderVenue(key) {
@@ -797,26 +765,41 @@ function renderVenue(key) {
   });
 }
 const firstVenue = controls[0].dataset.venue;
-const guestMap = createGuestMap({
-  scene, initialSelection:firstVenue,
-  zoomIn:document.getElementById('venue-zoom-in'),
-  zoomOut:document.getElementById('venue-zoom-out'),
-  onSelect:renderVenue, onReset:() => renderVenue(null)
-});
+let guestMap;
+let mapObserver;
+function ensureGuestMap() {
+  if (guestMap) return guestMap;
+  mapObserver?.disconnect();
+  guestMap = createGuestMap({
+    scene, initialSelection:activeVenue,
+    zoomIn:document.getElementById('venue-zoom-in'),
+    zoomOut:document.getElementById('venue-zoom-out'),
+    onSelect:renderVenue, onReset:() => renderVenue(null)
+  });
+  return guestMap;
+}
 renderVenue(firstVenue);
+if ('IntersectionObserver' in window) {
+  mapObserver = new IntersectionObserver(observations => {
+    if (observations.some(observation => observation.isIntersecting)) ensureGuestMap();
+  }, {rootMargin:'700px 0px'});
+  mapObserver.observe(scene);
+} else {
+  ensureGuestMap();
+}
 function openVenue(key) {
   if (!venues[key]) return;
   renderVenue(key);
-  guestMap.focus(key);
+  ensureGuestMap().focus(key);
 }
 function clearSelection() {
-  guestMap.reset();
+  ensureGuestMap().reset();
   renderVenue(null);
 }
 reset.addEventListener('click', () => { clearSelection(); scene.focus({preventScroll:true}); });
 controls.forEach(trigger => trigger.addEventListener('click', () => {
   const key = trigger.dataset.venue;
-  if (key === activeVenue && guestMap.isFocused(key)) {
+  if (key === activeVenue && guestMap?.isFocused(key)) {
     clearSelection();
     return;
   }
@@ -825,22 +808,6 @@ controls.forEach(trigger => trigger.addEventListener('click', () => {
     section.scrollIntoView({block:'start',behavior:prefersReducedMotion.matches ? 'instant' : 'smooth'});
   }
 }));
-
-dialog.querySelectorAll('[data-step]').forEach(button => {
-  button.addEventListener('click', () => step(activeVenue, Number(button.dataset.step)));
-});
-dialog.querySelector('.venue-lightbox-close').addEventListener('click', () => dialog.close());
-dialog.addEventListener('click', event => { if (event.target === dialog) dialog.close(); });
-dialog.addEventListener('close', () => {
-  if (returnFocus?.isConnected) returnFocus.focus({preventScroll:true});
-  returnFocus = null;
-});
-dialog.addEventListener('keydown', event => {
-  if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft') return;
-  event.preventDefault();
-  step(activeVenue, event.key === 'ArrowRight' ? 1 : -1);
-});
-enableSwipe(dialog.querySelector('.venue-large-image'), () => activeVenue);
 
 document.addEventListener('keydown', event => {
   if (event.key === 'Tab' || event.key.startsWith('Arrow')) section.classList.add('keyboard-nav');

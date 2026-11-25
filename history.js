@@ -4,12 +4,14 @@
   if (!section) return;
   const cards = Array.from(section.querySelectorAll('.hs-card'));
   const photos = Array.from(section.querySelectorAll('.hs-image'));
+  const photoImages = photos.map(photo => photo.querySelector('img'));
   const credits = Array.from(section.querySelectorAll('.hs-credit'));
   const previous = section.querySelector('.hs-prev');
   const next = section.querySelector('.hs-next');
   const toggle = section.querySelector('.hs-play');
   const ruler = section.querySelector('.hs-ruler-track');
   const announce = section.querySelector('.hs-announce');
+  const mobileLayout = matchMedia('(max-width: 800px), (pointer: coarse)');
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
   const count = cards.length;
   const last = count - 1;
@@ -17,20 +19,47 @@
   const wrap = value => (value % count + count) % count;
   const clamp = value => Math.min(1, Math.max(0, value));
   const smooth = value => value * value * (3 - 2 * value);
+  const photoRequests = new Map();
 
   let index = -1;
   let position = 0;
+  let lowerPhoto = -1;
+  let upperPhoto = -1;
   let intendedYear = null;
   let paused = reducedMotion.matches;
   let keyboardFocus = false;
+  let inView = false;
   let visible = false;
   let pinned = false;
   let lastPhysical = null;
   let animation = 0;
+  let transitionId = 0;
   let scrollFrame = 0;
   let timer;
   let touchOrigin;
   let lastSwipe = -Infinity;
+
+  function setPhotoSource(image) {
+    if (!image.dataset.src || image.getAttribute('src')) return;
+    const source = image.closest('picture')?.querySelector('source[data-srcset]');
+    if (source) source.srcset = source.dataset.srcset;
+    image.src = image.dataset.src;
+  }
+
+  function requestPhoto(year) {
+    const i = wrap(year);
+    if (!photoRequests.has(i)) {
+      const image = photoImages[i];
+      image.loading = 'eager';
+      setPhotoSource(image);
+      photoRequests.set(i, image.decode().catch(() => {}));
+    }
+    return photoRequests.get(i);
+  }
+
+  function preloadNextPhoto() {
+    if (mobileLayout.matches && inView && index >= 0) requestPhoto(index + 1);
+  }
 
   function describeYear(active, manual) {
     if (active === index) return;
@@ -41,6 +70,7 @@
     previous.setAttribute('aria-label', 'Предыдущий год — ' + cards[wrap(index - 1)].dataset.year);
     next.setAttribute('aria-label', 'Следующий год — ' + cards[wrap(index + 1)].dataset.year);
     if (manual) announce.textContent = cards[index].dataset.year + '. ' + cards[index].querySelector('p').textContent;
+    preloadNextPhoto();
   }
 
   // Use one fractional year for all three layers, including interrupted clicks or a trackpad gesture.
@@ -59,10 +89,17 @@
       }
       card.style.setProperty('--hs-start', distance.toFixed(4));
     });
-    photos.forEach((photo, i) => {
-      photo.style.opacity = i === lower ? '1' : i === upper ? String(fraction) : '0';
-      photo.style.zIndex = i === upper ? '1' : '0';
-    });
+    if (lowerPhoto !== lower || upperPhoto !== upper) {
+      for (const previousPhoto of [lowerPhoto, upperPhoto]) {
+        if (previousPhoto >= 0 && previousPhoto !== lower && previousPhoto !== upper) photos[previousPhoto].style.opacity = '0';
+      }
+      photos[lower].style.opacity = '1';
+      photos[lower].style.zIndex = '0';
+      photos[upper].style.zIndex = '1';
+      lowerPhoto = lower;
+      upperPhoto = upper;
+    }
+    if (lower !== upper) photos[upper].style.opacity = String(fraction);
     ruler.style.setProperty('--hs-ruler-position', String(-p));
     describeYear(wrap(Math.round(p)), manual);
   }
@@ -97,6 +134,7 @@
   function cancelTransition() {
     cancelAnimationFrame(animation);
     animation = 0;
+    transitionId++;
     intendedYear = null;
   }
 
@@ -122,13 +160,14 @@
   }
 
   function queueScroll() {
-    if (!scrollFrame) scrollFrame = requestAnimationFrame(readScroll);
+    if (!scrollFrame && track.classList.contains('is-scrollable')) scrollFrame = requestAnimationFrame(readScroll);
   }
 
   function step(direction, manual = true) {
     const target = wrap((intendedYear ?? index) + direction);
     cancelTransition();
     intendedYear = target;
+    clearTimeout(timer);
     if (track.classList.contains('is-scrollable')) {
       const state = measure();
       if (state.pinned) {
@@ -137,26 +176,44 @@
         window.scrollTo({ top: state.start + target / last * state.distance, behavior: 'instant' });
       }
     }
-    if (reducedMotion.matches) {
-      render(target, manual);
-      intendedYear = null;
-    } else {
-      const start = wrap(position);
-      const distance = direction === 1 ? wrap(target - start) : -wrap(start - target);
-      const began = performance.now();
-      function tick(now) {
-        const progress = clamp((now - began) / 650);
-        render(start + distance * smooth(progress), manual);
-        if (progress < 1) animation = requestAnimationFrame(tick);
-        else {
-          render(target, manual);
-          animation = 0;
-          intendedYear = null;
+    const start = wrap(position);
+    const directedDistance = direction === 1 ? wrap(target - start) : -wrap(start - target);
+    const distance = mobileLayout.matches && Math.abs(directedDistance) > count / 2
+      ? directedDistance - Math.sign(directedDistance) * count
+      : directedDistance;
+    const currentTransition = transitionId;
+    function begin() {
+      if (currentTransition !== transitionId) return;
+      if (reducedMotion.matches || distance === 0) {
+        render(target, manual);
+        intendedYear = null;
+      } else {
+        const began = performance.now();
+        function tick(now) {
+          const progress = clamp((now - began) / 650);
+          render(start + distance * smooth(progress), manual);
+          if (progress < 1) animation = requestAnimationFrame(tick);
+          else {
+            render(target, manual);
+            animation = 0;
+            intendedYear = null;
+          }
         }
+        animation = requestAnimationFrame(tick);
       }
-      animation = requestAnimationFrame(tick);
+      schedule();
     }
-    schedule();
+
+    if (!mobileLayout.matches) {
+      begin();
+      return;
+    }
+    // Keep the current image visible until every background in the transition is decoded.
+    const requests = [];
+    const first = reducedMotion.matches ? target : Math.floor(Math.min(start, start + distance));
+    const final = reducedMotion.matches ? target : Math.ceil(Math.max(start, start + distance));
+    for (let year = first; year <= final; year++) requests.push(requestPhoto(year));
+    Promise.all(requests).then(begin);
   }
 
   previous.addEventListener('click', () => {
@@ -210,7 +267,9 @@
 
   function configureTrack() {
     track.style.setProperty('--hs-intervals', last);
-    track.classList.toggle('is-scrollable', !reducedMotion.matches && last > 0);
+    track.classList.toggle('is-scrollable', !mobileLayout.matches && !reducedMotion.matches && last > 0);
+    if (!mobileLayout.matches) photoImages.forEach(setPhotoSource);
+    preloadNextPhoto();
     if (reducedMotion.matches) {
       paused = true;
       cancelTransition();
@@ -227,13 +286,17 @@
   window.addEventListener('scroll', queueScroll, { passive: true });
   window.addEventListener('resize', queueScroll);
   window.addEventListener('pageshow', queueScroll);
+  mobileLayout.addEventListener('change', configureTrack);
   reducedMotion.addEventListener('change', configureTrack);
   if ('IntersectionObserver' in window) {
     new IntersectionObserver(([entry]) => {
+      inView = entry.isIntersecting;
       visible = entry.intersectionRatio >= .5;
+      preloadNextPhoto();
       schedule();
     }, {threshold: [0, .5, 1]}).observe(section);
   } else {
+    inView = true;
     visible = true;
   }
   render(0);

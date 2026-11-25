@@ -4,7 +4,7 @@
 *{box-sizing:border-box}
 html{--header-height:clamp(78px,8.2vw,151px);scroll-padding-top:var(--header-height)}
 #venue,#directions,#contacts,#programme .programme-tabs{scroll-margin-top:12px}
-body{margin:0}
+body{margin:0;background-color:var(--paper)}
 button,a{font:inherit}
 button{cursor:pointer}
 a{color:inherit}
@@ -19,7 +19,9 @@ a{color:inherit}
 .hero-stage{height:var(--stage-h);position:sticky;top:min(0px,calc(100svh - var(--stage-h)));isolation:isolate}
 .hero-clip{position:absolute;inset:0;overflow:hidden;background:var(--paper);pointer-events:auto}
 .memories{position:absolute;inset:0}
-.orb-slot{position:absolute;width:24%;aspect-ratio:1;transform:translate3d(var(--drift-x,0px),var(--lift-y,0px),0);opacity:var(--orb-opacity,1)}
+.orb-slot{position:absolute;width:24%;aspect-ratio:1}
+.orb-slot.is-flown{visibility:hidden}
+.hero-stage.is-outside .orb-float,.orb-slot.is-flown .orb-float{animation-play-state:paused}
 .orb-float {
   display: grid;
   place-items: center;
@@ -36,7 +38,7 @@ a{color:inherit}
   color: white;
   animation: levitate var(--float-time, 7s) var(--delay, 0s) ease-in-out infinite alternate;
 }
-.orb-float img, .orb-float::before {
+.orb-photo, .orb-float img, .orb-float::before {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -120,23 +122,35 @@ a{color:inherit}
 .hero-copy .forum-btn{pointer-events:auto}
 .word-window{z-index:4;position:absolute;left:0;right:0;top:100%;height:23vw;margin-top:-11.5vw;overflow:hidden;pointer-events:none}
 .forum-word{position:absolute;top:50%;left:-2.083vw;width:max-content;color:var(--bronze);font:500 25.312vw/1 "Cormorant Garamond",Georgia,serif;text-box:trim-both cap alphabetic;text-transform:uppercase;white-space:nowrap;transform:translate3d(var(--word-x,0px),-50%,0);font-variant-numeric:lining-nums proportional-nums}
-.nav-toggle{display:none}
+.nav-toggle,.nav-close,.nav-backdrop{display:none}
 @media(max-width:1120px){
- .forum-header{display:flex;justify-content:space-between}
- .forum-nav{display:none}
+ .forum-header{display:flex;justify-content:space-between;padding-top:calc(clamp(16px,1.667vw,32px) + env(safe-area-inset-top,0px));padding-inline:max(2.778%,env(safe-area-inset-left,0px)) max(2.778%,env(safe-area-inset-right,0px))}
+ .forum-header::before{background:linear-gradient(var(--paper),var(--paper)) top/100% env(safe-area-inset-top,0px) no-repeat,url("assets/header-surface.png") center/100% 100%}
  .nav-toggle{display:grid;place-content:center;gap:6px;width:46px;height:46px;border-radius:50%;background:#f3eee5e8;color:var(--ink);border:1px solid #29221e99}
  .nav-toggle span{display:block;width:20px;height:1px;background:currentColor}
- .menu-open .forum-nav{display:grid;position:absolute;right:3%;top:calc(100% + 5px);width:min(285px,94vw);max-height:calc(100dvh - var(--header-height) - 12px);overflow:auto;grid-template-columns:1fr;gap:6px;background:var(--paper);border:1px solid #29221e2b;border-radius:22px;padding:10px;box-shadow:0 12px 36px #30271f26}
- .forum-nav .header-links,.forum-nav .header-actions{display:grid;gap:4px}
- .forum-nav .header-links a{padding:11px 16px;font-size:1rem;border-radius:14px}
+ .has-open-menu{overflow:hidden;overscroll-behavior:none}
+ .nav-backdrop{display:block;position:fixed;inset:0;background:#29221e57;opacity:0;visibility:hidden;pointer-events:none;touch-action:none;transition:opacity .25s,visibility 0s .25s}
+ .menu-open .nav-backdrop{opacity:1;visibility:visible;pointer-events:auto;transition-delay:0s}
+ .forum-nav{
+   display:flex;position:fixed;inset:0 auto 0 0;flex-direction:column;align-items:stretch;
+   width:min(88vw,440px);gap:24px;overflow-y:auto;overscroll-behavior:contain;
+   padding:calc(16px + env(safe-area-inset-top,0px)) 22px calc(24px + env(safe-area-inset-bottom,0px)) max(22px,env(safe-area-inset-left,0px));
+   background:var(--paper);border-radius:0 22px 22px 0;box-shadow:12px 0 44px #29221e24;
+   transform:translateX(-105%);visibility:hidden;pointer-events:none;
+   transition:transform .29s cubic-bezier(.22,.61,.36,1),visibility 0s .29s;
+ }
+ .menu-open .forum-nav{transform:translateX(0);visibility:visible;pointer-events:auto;transition-delay:0s}
+ .nav-close{display:grid;place-items:center;align-self:flex-end;width:46px;height:46px;flex:none;padding:0;background:none;color:var(--ink);border:1px solid #29221e55;border-radius:50%}
+ .forum-nav .header-links,.forum-nav .header-actions{display:grid;justify-content:stretch}
+ .forum-nav .header-links{gap:4px}
+ .forum-nav .header-links a{display:flex;align-items:center;min-height:58px;padding:12px 14px;font-size:clamp(1.15rem,5.4vw,1.55rem);line-height:1.2;white-space:normal;border-radius:14px;color:var(--ink)}
  .forum-nav .header-links a:hover,.forum-nav .header-links a[aria-current="location"]{background:#29221e0d}
- .forum-nav .header-actions{grid-template-columns:1fr;justify-content:stretch}
- .header-actions .forum-btn{min-height:44px}
+ .forum-nav .header-actions{grid-template-columns:1fr;gap:8px;margin-top:auto}
+ .header-actions .forum-btn{min-height:50px;font-size:1rem}
 }
 @media(max-width:740px){
  .intro{--stage-h:clamp(605px,89svh,850px)}
- .has-motion .intro{height:calc(var(--stage-h) + 119svh)}
- .forum-header{padding:14px 5%}.brand img{width:140px}
+ .forum-header{padding:calc(14px + env(safe-area-inset-top,0px)) max(5%,env(safe-area-inset-right,0px)) 14px max(5%,env(safe-area-inset-left,0px))}.brand img{width:140px}
  .orb-slot{width:clamp(110px,29vw,175px)}
  .orb-group{left:-4%;top:12%}.orb-podium{left:67%;top:8%}.orb-team{left:75%;top:68%}
  .orb-archive{left:-8%;top:63%}.orb-award{left:87%;top:29%}.orb-flowers{left:39%;top:78%}
@@ -145,9 +159,18 @@ a{color:inherit}
  .forum-deck{max-width:31em;font-size:.9rem}
  .hero-copy .hero-actions{margin-top:20px;gap:12px}
  .forum-btn{font-size:.93rem;padding:11px 18px;min-height:44px}
- .word-window{height:30vw;margin-top:-15vw}.forum-word{font-size:32vw}
 }
+@media(max-width:740px),(hover:none){
+ .hero-stage{position:relative;top:auto}
+ .memories,.orb-float{pointer-events:none}
+ .orb-float::before,.orb-caption{display:none}
+ .orb-float{container-type:normal;animation:none}
+ .orb-group .orb-float,.orb-podium .orb-float,.orb-team .orb-float{animation:levitate-soft var(--float-time,7s) var(--delay,0s) ease-in-out 2 alternate both}
+ .word-window{height:16vw;margin-top:-8vw}
+ .forum-word{left:0;width:100%;text-align:center;font-size:min(10.2vw,6rem)}
+}
+@keyframes levitate-soft{from{transform:translateY(0)}to{transform:translateY(-6px)}}
 @media(max-width:420px){.forum-date{font-size:.94rem}.orb-award{left:90%;top:28%}.forum-deck{max-width:23em}}
 @media(prefers-reduced-motion:reduce){
- .has-motion .intro{height:var(--stage-h)}.orb-float{animation:none}.orb-slot img,.orb-float::before,.orb-caption,.forum-btn{transition:none}
+ .has-motion .intro{height:var(--stage-h)}.orb-slot .orb-float{animation:none}.orb-slot img,.orb-float::before,.orb-caption,.forum-btn,.forum-nav,.nav-backdrop{transition:none}
 }
