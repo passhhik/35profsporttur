@@ -171,8 +171,18 @@ a{color:inherit}
  .orb-group .orb-float,.orb-podium .orb-float,.orb-team .orb-float{animation:levitate-soft var(--float-time,7s) var(--delay,0s) ease-in-out 2 alternate both}
  .word-window{font-size:clamp(6rem,32vw,14rem);height:1.15em;margin-top:-.575em}
  .forum-word{left:0;font-size:inherit}
- .has-motion .word-window{top:calc(100% + .31em - clamp(12px,calc(var(--stage-h) * .025),24px))}
- html:not(.has-motion) .word-window{height:16vw;margin-top:-8vw}
+ .has-motion .word-window{
+   --word-peek:clamp(17px,calc(var(--stage-h) * .03),28px);
+   --word-clearance:max(12px,min(18px,env(safe-area-inset-bottom,0px)));
+   --word-lowered:min(var(--word-clearance),calc(var(--word-reveal-depth,0px) / 2));
+   --word-mask-edge:calc(.265em + var(--word-peek) + var(--word-reveal-depth,0px) - var(--word-lowered));
+   --word-mask:linear-gradient(#000 calc(var(--word-mask-edge) - 10px),transparent var(--word-mask-edge));
+   top:calc(100% + .31em - var(--word-peek));
+   translate:0 calc(var(--word-lowered) - var(--word-clearance));
+   -webkit-mask-image:var(--word-mask);
+   mask-image:var(--word-mask);
+ }
+ html:not(.has-motion) .word-window{top:auto;bottom:max(12px,env(safe-area-inset-bottom,0px));height:16vw;margin-top:0}
  html:not(.has-motion) .forum-word{width:100%;text-align:center;font-size:min(10.2vw,6rem)}
 }
 @media(max-width:740px) and (max-height:530px),(hover:none) and (max-height:530px){

@@ -39,6 +39,7 @@
   let frame = 0;
   let previousFrame = 0;
   let wordProgress = 0;
+  let wordRevealDepth;
   let previousProgress = -1;
   let historyLead;
   let navigationScroll;
@@ -185,18 +186,21 @@
     root.classList.toggle('has-motion', animatesHero());
     const box = intro.getBoundingClientRect();
     const stageHeight = stage.offsetHeight;
+    const wordHeight = word.offsetHeight;
     const distance = Math.max(1, box.height - stageHeight);
     const touchLayout = decorativeOrbs.matches;
     // Finish the mobile word movement after the cover releases into normal scrolling.
     const wordTail = touchLayout ? Math.min(stageHeight * .22, 195) : 0;
     metrics = {
       top: box.top + scrollY,
+      pinEnd: box.top + scrollY + distance,
       distance: distance + wordTail,
       pinShare: distance / (distance + wordTail),
       height: stageHeight,
       width: wordWindow.clientWidth,
       wordTravel: Math.max(0, word.offsetWidth - wordWindow.clientWidth),
-      wordLift: touchLayout ? Math.min(stageHeight * .055, word.offsetHeight * .44) : stageHeight * .23
+      wordLift: touchLayout ? Math.min(stageHeight * .055, wordHeight * .44) : stageHeight * .23,
+      wordRevealLimit: wordHeight + 28
     };
     cancelAnimationFrame(frame);
     for (const flight of flights) {
@@ -272,6 +276,15 @@
     if (snap || wordProgress !== oldWordProgress) {
       word.style.setProperty('--word-x', (-metrics.wordTravel * wordProgress).toFixed(2) + 'px');
       wordWindow.style.transform = 'translateY(' + (-metrics.wordLift * wordProgress).toFixed(2) + 'px)';
+    }
+    if (touchLayout && animatesHero()) {
+      // Reveal letters as the title lifts and as the cover rolls out of the viewport.
+      const exposed = Math.max(0, pageScroll - metrics.pinEnd) + metrics.wordLift * wordProgress;
+      const depth = Math.min(metrics.wordRevealLimit, exposed).toFixed(1);
+      if (snap || depth !== wordRevealDepth) {
+        wordWindow.style.setProperty('--word-reveal-depth', depth + 'px');
+        wordRevealDepth = depth;
+      }
     }
     if (progress !== scrollProgress || wordProgress !== target) {
       previousFrame = now;
