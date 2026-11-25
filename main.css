@@ -14,7 +14,7 @@ a{color:inherit}
 .skip-link:focus{transform:none}
 .intro{--stage-h:clamp(540px,53.889vw,1080px);position:relative;height:var(--stage-h);z-index:2;pointer-events:none}
 .has-motion .intro{height:calc(var(--stage-h) + 147svh)}
-/* Keep the real history photo visible below the pinned cover on tall viewports. */
+/* Keep the history photo under the title as it crosses the edge of the pinned cover. */
 .has-motion .intro + #history{translate:0 var(--history-lead,0px);scroll-margin-top:var(--history-lead,0px)}
 .hero-stage{height:var(--stage-h);position:sticky;top:min(0px,calc(100svh - var(--stage-h)));isolation:isolate}
 .hero-clip{position:absolute;inset:0;overflow:hidden;background:var(--paper);pointer-events:auto}
@@ -163,7 +163,7 @@ a{color:inherit}
 @media(max-width:740px),(hover:none){
  html:not(.has-motion) .hero-stage{position:relative;top:auto}
  .has-motion .intro{height:calc(var(--stage-h) + clamp(360px,94svh,780px))}
- .has-motion .intro + #history{translate:none;scroll-margin-top:0}
+ .has-motion .hero-stage{top:min(0px,calc(89svh - var(--stage-h)))}
  .memories,.orb-float{pointer-events:none}
  .orb-float::before,.orb-caption{display:none}
  .orb-float{container-type:normal;animation:none}

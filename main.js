@@ -39,6 +39,7 @@
   let previousFrame = 0;
   let wordProgress = 0;
   let previousProgress = -1;
+  let historyLead;
   let navigationScroll;
   let navigationTimer;
   let menuOpen = false;
@@ -162,17 +163,22 @@
     root.classList.toggle('has-motion', animatesHero());
     const box = intro.getBoundingClientRect();
     const stageHeight = stage.offsetHeight;
+    const distance = Math.max(1, box.height - stageHeight);
+    const touchLayout = decorativeOrbs.matches;
+    const stickyInset = touchLayout ? Math.min(0, parseFloat(getComputedStyle(stage).top) || 0) : 0;
     metrics = {
       top: box.top + scrollY,
-      distance: Math.max(1, box.height - stageHeight),
+      distance: distance - stickyInset,
+      initialHistoryLead: -distance,
       height: stageHeight,
       width: wordWindow.clientWidth,
-      wordTravel: Math.max(0, word.offsetWidth - wordWindow.clientWidth)
+      wordTravel: Math.max(0, word.offsetWidth - wordWindow.clientWidth),
+      wordLift: touchLayout ? Math.min(stageHeight * .055, word.offsetHeight * .44) : stageHeight * .23
     };
     cancelAnimationFrame(frame);
     for (const flight of flights) {
       flight.phase = undefined;
-      if (decorativeOrbs.matches) {
+      if (touchLayout) {
         const {slot} = flight;
         flight.exitDistance = Math.max(0, slot.offsetTop + slot.offsetHeight + 18);
         const side = slot.offsetLeft + slot.offsetWidth / 2 < metrics.width / 2 ? -1 : 1;
@@ -185,6 +191,10 @@
   function animatesHero() {
     return !motion.matches;
   }
+  function followScroll(current, target, elapsed, timeConstant, threshold) {
+    const next = current + (target - current) * (1 - Math.exp(-elapsed / timeConstant));
+    return Math.abs(next - target) < threshold ? target : next;
+  }
   function update(now, snap = false) {
     frame = 0;
     const pageScroll = scrollY;
@@ -193,11 +203,19 @@
       navigationScroll = pageScroll;
       updateNavigation();
     }
-    const progress = animatesHero() ? limit((pageScroll - metrics.top) / metrics.distance) : 0;
+    const scrollProgress = animatesHero() ? limit((pageScroll - metrics.top) / metrics.distance) : 0;
+    const elapsed = previousFrame ? Math.min(40, now - previousFrame) : 16;
+    const outside = pageScroll >= metrics.top + metrics.distance + metrics.height * .15;
+    const progress = touchLayout && !snap && !outside
+      ? followScroll(previousProgress, scrollProgress, elapsed, 86, .0006)
+      : scrollProgress;
+    // Align the photo with the pinned stage even while the foreground catches up to the swipe.
+    const lead = Math.max(metrics.initialHistoryLead, (scrollProgress - 1) * metrics.distance);
+    if (snap || lead !== historyLead) {
+      history.style.setProperty('--history-lead', lead.toFixed(2) + 'px');
+      historyLead = lead;
+    }
     if (progress !== previousProgress) {
-      if (!touchLayout) {
-        history.style.setProperty('--history-lead', ((progress - 1) * metrics.distance).toFixed(2) + 'px');
-      }
       for (const flight of flights) {
         const {slot, drift, lift} = flight;
         // Give each phone orb more room to accelerate while finishing before the title starts.
@@ -224,18 +242,19 @@
     }
     // The type follows the second stretch of scroll after the last photograph leaves.
     const target = smooth(limit((progress - .50) / .50));
-    const elapsed = previousFrame ? Math.min(40, now - previousFrame) : 16;
-    const outside = pageScroll >= metrics.top + metrics.distance + metrics.height * .15;
     const oldWordProgress = wordProgress;
     wordProgress = snap || touchLayout || outside ? target :
-      wordProgress + (target - wordProgress) * (1 - Math.exp(-elapsed / 70));
-    if (Math.abs(wordProgress - target) < .00015) wordProgress = target;
+      followScroll(wordProgress, target, elapsed, 70, .00015);
     if (snap || wordProgress !== oldWordProgress) {
       word.style.setProperty('--word-x', (-metrics.wordTravel * wordProgress).toFixed(2) + 'px');
-      wordWindow.style.transform = 'translateY(' + (-metrics.height * .23 * wordProgress).toFixed(2) + 'px)';
+      wordWindow.style.transform = 'translateY(' + (-metrics.wordLift * wordProgress).toFixed(2) + 'px)';
     }
-    previousFrame = wordProgress === target ? 0 : now;
-    if (wordProgress !== target) frame = requestAnimationFrame(update);
+    if (progress !== scrollProgress || wordProgress !== target) {
+      previousFrame = now;
+      frame = requestAnimationFrame(update);
+    } else {
+      previousFrame = 0;
+    }
   }
   function queue() {
     if (decorativeOrbs.matches || !animatesHero()) {
