@@ -178,10 +178,12 @@ a{color:inherit}
    --word-mask-edge:calc(.265em + var(--word-peek) + var(--word-reveal-depth,0px) - var(--word-lowered));
    --word-mask:linear-gradient(#000 calc(var(--word-mask-edge) - 10px),transparent var(--word-mask-edge));
    top:calc(100% + .31em - var(--word-peek));
+   padding-inline:max(20px,calc(env(safe-area-inset-left,0px) + 12px),calc(env(safe-area-inset-right,0px) + 12px));
    translate:0 calc(var(--word-lowered) - var(--word-clearance));
    -webkit-mask-image:var(--word-mask);
    mask-image:var(--word-mask);
  }
+ .has-motion .forum-word{transform-origin:left center;transform:translate3d(var(--word-x,0px),-50%,0) scale(var(--word-scale,1))}
  html:not(.has-motion) .word-window{top:auto;bottom:max(12px,env(safe-area-inset-bottom,0px));height:16vw;margin-top:0}
  html:not(.has-motion) .forum-word{width:100%;text-align:center;font-size:min(10.2vw,6rem)}
 }

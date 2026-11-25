@@ -39,7 +39,8 @@
   let frame = 0;
   let previousFrame = 0;
   let wordProgress = 0;
-  let wordRevealDepth;
+  let previousWordEntry;
+  let previousWordExit;
   let previousProgress = -1;
   let historyLead;
   let navigationScroll;
@@ -187,19 +188,30 @@
     const box = intro.getBoundingClientRect();
     const stageHeight = stage.offsetHeight;
     const wordHeight = word.offsetHeight;
+    const wordWidth = word.offsetWidth;
+    const width = wordWindow.clientWidth;
     const distance = Math.max(1, box.height - stageHeight);
     const touchLayout = decorativeOrbs.matches;
-    // Finish the mobile word movement after the cover releases into normal scrolling.
-    const wordTail = touchLayout ? Math.min(stageHeight * .22, 195) : 0;
+    const wordCenter = Math.round(stageHeight * .49);
+    const photoHandoff = stageHeight - wordCenter;
+    const fadeDistance = Math.min(72, stageHeight * .10);
+    const wordTail = touchLayout ? photoHandoff + fadeDistance : 0;
+    const gutter = touchLayout ? parseFloat(getComputedStyle(wordWindow).paddingLeft) || 0 : 0;
+    const fitWidth = Math.max(1, Math.min(wordWidth, width - gutter * 2, 780));
     metrics = {
       top: box.top + scrollY,
       pinEnd: box.top + scrollY + distance,
       distance: distance + wordTail,
       pinShare: distance / (distance + wordTail),
       height: stageHeight,
-      width: wordWindow.clientWidth,
-      wordTravel: Math.max(0, word.offsetWidth - wordWindow.clientWidth),
-      wordLift: touchLayout ? Math.min(stageHeight * .055, wordHeight * .44) : stageHeight * .23,
+      width,
+      wordTravel: Math.max(0, wordWidth - width),
+      wordLift: touchLayout ? wordWindow.offsetTop + wordWindow.offsetHeight / 2 - wordCenter : stageHeight * .23,
+      wordScale: fitWidth / Math.max(1, wordWidth),
+      wordInset: (width - fitWidth) / 2,
+      photoHandoff,
+      fadeDistance,
+      wordTail,
       wordRevealLimit: wordHeight + 28
     };
     cancelAnimationFrame(frame);
@@ -222,6 +234,21 @@
     const next = current + (target - current) * (1 - Math.exp(-elapsed / timeConstant));
     return Math.abs(next - target) < threshold ? target : next;
   }
+  function renderPhoneWord(coverProgress, pageScroll, snap) {
+    const entry = smooth(limit((coverProgress - .50) / .25));
+    const exit = Math.min(metrics.wordTail, Math.max(0, pageScroll - metrics.pinEnd));
+    if (!snap && entry === previousWordEntry && exit === previousWordExit) return;
+    previousWordEntry = entry;
+    previousWordExit = exit;
+    // After the cover releases, keep the fitted name still while the photo rises to meet it.
+    const y = (Math.min(exit, metrics.photoHandoff) - metrics.wordLift) * entry;
+    const opacity = 1 - smooth(limit((exit - metrics.photoHandoff) / metrics.fadeDistance));
+    word.style.setProperty('--word-x', (metrics.wordInset * entry).toFixed(2) + 'px');
+    word.style.setProperty('--word-scale', (1 - (1 - metrics.wordScale) * entry).toFixed(4));
+    wordWindow.style.setProperty('--word-reveal-depth', (metrics.wordRevealLimit * entry).toFixed(1) + 'px');
+    wordWindow.style.transform = 'translateY(' + y.toFixed(2) + 'px)';
+    wordWindow.style.opacity = String(opacity);
+  }
   function update(now, snap = false) {
     frame = 0;
     const pageScroll = scrollY;
@@ -241,8 +268,8 @@
       history.style.setProperty('--history-lead', lead.toFixed(2) + 'px');
       historyLead = lead;
     }
-    if (progress !== previousProgress) {
-      const coverProgress = limit(progress / metrics.pinShare);
+    const coverProgress = limit(progress / metrics.pinShare);
+    if (snap || coverProgress !== limit(previousProgress / metrics.pinShare)) {
       for (const flight of flights) {
         const {slot, drift, lift} = flight;
         // Give each phone orb more room to accelerate while finishing before the title starts.
@@ -263,30 +290,26 @@
         slot.classList.toggle('is-flown', opacity === 0);
         slot.inert = opacity < .05;
       }
-      copy.style.opacity = String(1 - smooth(limit((coverProgress - .55) / .32)));
-      copy.inert = coverProgress >= .87;
-      previousProgress = progress;
+      const copyFade = touchLayout ? limit((coverProgress - .50) / .22) : limit((coverProgress - .55) / .32);
+      copy.style.opacity = String(1 - smooth(copyFade));
+      copy.inert = copyFade === 1;
     }
-    // The type follows the second stretch of scroll after the last photograph leaves.
-    const wordStart = .5 * metrics.pinShare;
-    const target = smooth(limit((progress - wordStart) / (1 - wordStart)));
-    const oldWordProgress = wordProgress;
-    wordProgress = snap || touchLayout || outside ? target :
-      followScroll(wordProgress, target, elapsed, 70, .00015);
-    if (snap || wordProgress !== oldWordProgress) {
-      word.style.setProperty('--word-x', (-metrics.wordTravel * wordProgress).toFixed(2) + 'px');
-      wordWindow.style.transform = 'translateY(' + (-metrics.wordLift * wordProgress).toFixed(2) + 'px)';
-    }
+    previousProgress = progress;
+    let wordInFlight = false;
     if (touchLayout && animatesHero()) {
-      // Reveal letters as the title lifts and as the cover rolls out of the viewport.
-      const exposed = Math.max(0, pageScroll - metrics.pinEnd) + metrics.wordLift * wordProgress;
-      const depth = Math.min(metrics.wordRevealLimit, exposed).toFixed(1);
-      if (snap || depth !== wordRevealDepth) {
-        wordWindow.style.setProperty('--word-reveal-depth', depth + 'px');
-        wordRevealDepth = depth;
+      renderPhoneWord(coverProgress, pageScroll, snap);
+    } else {
+      if (snap) wordWindow.style.opacity = '';
+      const target = smooth(limit((progress - .50) / .50));
+      const oldWordProgress = wordProgress;
+      wordProgress = snap || outside ? target : followScroll(wordProgress, target, elapsed, 70, .00015);
+      if (snap || wordProgress !== oldWordProgress) {
+        word.style.setProperty('--word-x', (-metrics.wordTravel * wordProgress).toFixed(2) + 'px');
+        wordWindow.style.transform = 'translateY(' + (-metrics.wordLift * wordProgress).toFixed(2) + 'px)';
       }
+      wordInFlight = wordProgress !== target;
     }
-    if (progress !== scrollProgress || wordProgress !== target) {
+    if (progress !== scrollProgress || wordInFlight) {
       previousFrame = now;
       frame = requestAnimationFrame(update);
     } else {
