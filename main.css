@@ -94,6 +94,16 @@ a{color:inherit}
 .orb-award{left:81.89%;top:19.23%;--delay:-2s;--float-time:6.9s}
 .orb-flowers{left:25.15%;top:67.42%;--delay:-.5s;--float-time:6.4s}
 .orb-archive{left:2.72%;top:42.94%;--delay:-1.4s;--float-time:7.9s}
+@media(min-width:741px) and (hover:hover){
+ .orb-group .orb-caption{
+   --caption-top:calc(var(--header-height) + var(--stage-h) * .0436 - clamp(16px,1.667vw,32px) + 13px);
+   display:block;align-self:start;width:77%;margin-top:var(--caption-top);
+   max-height:max(44px,calc(90cqi - var(--caption-top)));overflow-y:auto;overscroll-behavior-y:contain;
+   scrollbar-width:thin;font-size:clamp(.68rem,3.6cqi,.875rem);line-height:1.28;
+ }
+ .orb-group .orb-details{display:block;margin-top:4px}
+ .orb-group.showing .orb-caption{pointer-events:auto}
+}
 .forum-header{position:fixed;inset:0 0 auto;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;padding:clamp(16px,1.667vw,32px) 2.778%;isolation:isolate;z-index:20}
 .forum-header::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:url("assets/header-surface.png") center/100% 100%}
 .forum-header:not(.is-scrolled):not(.menu-open){pointer-events:none}
