@@ -234,6 +234,67 @@
     const next = current + (target - current) * (1 - Math.exp(-elapsed / timeConstant));
     return Math.abs(next - target) < threshold ? target : next;
   }
+
+  const wheelMotion = matchMedia('(hover: hover) and (pointer: fine) and (prefers-reduced-motion: no-preference)');
+  let wheelFrame = 0;
+  let wheelPosition;
+  let wheelTarget;
+  let wheelLastScroll;
+  let wheelTime;
+
+  function stopWheelScroll() {
+    cancelAnimationFrame(wheelFrame);
+    wheelFrame = 0;
+  }
+
+  function stepWheelScroll(now) {
+    wheelFrame = 0;
+    // Yield when another control moves the page while wheel momentum is settling.
+    if (scrollY !== wheelLastScroll) return;
+    const elapsed = Math.max(0, Math.min(32, now - wheelTime));
+    wheelPosition = followScroll(wheelPosition, wheelTarget, elapsed, 72, .75);
+    wheelTime = now;
+    window.scrollTo({top: wheelPosition, behavior: 'instant'});
+    wheelLastScroll = scrollY;
+    if (wheelPosition !== wheelTarget) wheelFrame = requestAnimationFrame(stepWheelScroll);
+  }
+
+  function smoothWheel(event) {
+    if (event.defaultPrevented || !event.cancelable || menuOpen ||
+        event.ctrlKey || event.metaKey || event.shiftKey || event.altKey ||
+        Math.abs(event.deltaX) >= Math.abs(event.deltaY) || event.target.closest?.('.orb-caption')) {
+      stopWheelScroll();
+      return;
+    }
+    const mode = event.deltaMode;
+    const unit = mode === WheelEvent.DOM_DELTA_LINE ? 16 : mode === WheelEvent.DOM_DELTA_PAGE ? root.clientHeight : 1;
+    const delta = event.deltaY * unit;
+    const current = scrollY;
+    const continuing = wheelFrame && current === wheelLastScroll;
+    const sameDirection = continuing && Math.sign(wheelTarget - current) === Math.sign(delta);
+    const target = Math.max(0, Math.min(root.scrollHeight - root.clientHeight, (sameDirection ? wheelTarget : current) + delta));
+    if (!continuing && target === current) return;
+    event.preventDefault();
+    if (!continuing) {
+      wheelPosition = wheelLastScroll = current;
+      wheelTime = performance.now();
+    }
+    wheelTarget = target;
+    if (!wheelFrame) wheelFrame = requestAnimationFrame(stepWheelScroll);
+  }
+
+  function bindWheelMotion() {
+    if (wheelMotion.matches) window.addEventListener('wheel', smoothWheel, {passive:false});
+    else {
+      window.removeEventListener('wheel', smoothWheel);
+      stopWheelScroll();
+    }
+  }
+  wheelMotion.addEventListener('change', bindWheelMotion);
+  window.addEventListener('pointerdown', stopWheelScroll, {passive:true});
+  window.addEventListener('keydown', stopWheelScroll);
+  bindWheelMotion();
+
   function renderPhoneWord(coverProgress, pageScroll, snap) {
     const entry = smooth(limit((coverProgress - .50) / .25));
     const exit = Math.min(metrics.wordTail, Math.max(0, pageScroll - metrics.pinEnd));

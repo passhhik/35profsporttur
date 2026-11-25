@@ -3,6 +3,7 @@
 :root{color-scheme:light;--paper:#f3eee5;--ink:#29221e;--button:#242625;--bronze:#806653;--muted:#706b66;font-family:Manrope,Arial,sans-serif;background:var(--paper);color:var(--ink)}
 *{box-sizing:border-box}
 html{--header-height:clamp(78px,8.2vw,151px);scroll-padding-top:var(--header-height)}
+@media(prefers-reduced-motion:no-preference){html{scroll-behavior:smooth}}
 #venue,#directions,#contacts,#programme .programme-tabs{scroll-margin-top:12px}
 body{margin:0;background-color:var(--paper)}
 button,a{font:inherit}
