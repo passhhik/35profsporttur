@@ -1,0 +1,97 @@
+.forum-footer {
+  position: relative;
+  isolation: isolate;
+  display: grid;
+  grid-template-columns: minmax(0, 2.06fr) repeat(2, minmax(0, 1fr));
+  align-content: start;
+  column-gap: 20px;
+  max-width: 1650px;
+  min-height: 380px;
+  margin-inline: auto;
+  padding: 65px clamp(24px, 2.78vw, 48px) 88px;
+  color: #29221e;
+  font-family: Manrope, Arial, sans-serif;
+}
+.footer-landscape {
+  position: absolute;
+  z-index: -1;
+  left: -8.61%;
+  bottom: 1.89%;
+  width: 88.25%;
+  height: auto;
+  pointer-events: none;
+}
+.footer-brands {
+  display: flex;
+  align-items: center;
+  gap: clamp(24px, 7.15vw, 103px);
+  align-self: start;
+  margin-top: -10px;
+}
+.footer-brands a, .footer-social-links a { display: inline-flex; }
+.footer-brands img { display: block; max-width: 100%; height: auto; }
+.forum-footer h2 {
+  margin: 0;
+  color: #29221e;
+  font: 600 24px/1.2 Manrope, Arial, sans-serif;
+}
+.forum-footer p { margin: 0; font: 500 16px/1.4 Manrope, Arial, sans-serif; }
+.forum-footer .footer-contact-name { margin: 15px 0 5px; font-size: 18px; }
+.forum-footer .footer-note { color: #6f675f; }
+.footer-social .footer-note { margin-top: 5px; }
+.footer-actions, .footer-social-links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 15px;
+  margin-top: 20px;
+}
+.footer-actions a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 48px;
+  padding: 10px 23px;
+  border: 1px solid #242625;
+  border-radius: 32px;
+  background: #242625;
+  color: #f3eee5;
+  font: 600 16px/1.2 Manrope, Arial, sans-serif;
+  text-decoration: none;
+}
+.footer-actions a:hover { background: #49403a; }
+.footer-actions .footer-action-outline { color: #242625; background: transparent; }
+.footer-actions .footer-action-outline:hover { background: rgba(41,34,30,.07); }
+.footer-social-links { gap: 10px; margin-top: 15px; }
+.footer-social-links a { border-radius: 100%; }
+.footer-social-links a:hover { background: rgba(41,34,30,.08); }
+.forum-footer a:focus-visible { outline: 2px solid #806653; outline-offset: 3px; }
+.forum-footer small {
+  position: absolute;
+  bottom: 26px;
+  left: clamp(24px, 2.78vw, 48px);
+  color: #6f675f;
+  font-size: 14px;
+  line-height: 1.4;
+}
+@media (max-width: 1000px) {
+  .forum-footer { grid-template-columns: 1fr 1.1fr 1fr; gap: 20px; }
+  .footer-brands { gap: 22px; flex-wrap: wrap; }
+  .footer-brands a:first-child { width: min(160px, 62%); }
+  .footer-brands a:nth-child(2) { width: 54px; }
+  .footer-actions { gap: 8px; }
+  .footer-actions a { padding-inline: 16px; }
+}
+@media (max-width: 740px) {
+  .forum-footer { grid-template-columns: 1fr 1fr; row-gap: 30px; padding: 32px 22px 88px; }
+  .footer-brands { grid-column: 1/-1; margin: 0; gap: 38px; }
+  .footer-landscape { left: -48%; width: 145%; max-width: none; bottom: 0; }
+  .forum-footer small { left: 22px; bottom: 22px; }
+}
+@media (max-width: 510px) {
+  .forum-footer { grid-template-columns: 1fr; }
+  .footer-brands { grid-column: auto; }
+  .footer-actions { gap: 12px; }
+  .footer-actions a { padding-inline: 22px; }
+  .forum-footer h2 { font-size: 21px; }
+}
