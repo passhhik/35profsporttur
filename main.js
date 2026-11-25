@@ -262,7 +262,7 @@
   function smoothWheel(event) {
     if (event.defaultPrevented || !event.cancelable || menuOpen ||
         event.ctrlKey || event.metaKey || event.shiftKey || event.altKey ||
-        Math.abs(event.deltaX) >= Math.abs(event.deltaY) || event.target.closest?.('.orb-caption')) {
+        Math.abs(event.deltaX) >= Math.abs(event.deltaY)) {
       stopWheelScroll();
       return;
     }

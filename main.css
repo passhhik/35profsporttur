@@ -20,7 +20,7 @@ a{color:inherit}
 .hero-stage{height:var(--stage-h);position:sticky;top:min(0px,calc(100svh - var(--stage-h)));isolation:isolate}
 .hero-clip{position:absolute;inset:0;overflow:hidden;background:var(--paper);pointer-events:auto}
 .memories{position:absolute;inset:0}
-.orb-slot{position:absolute;width:24%;aspect-ratio:1}
+.orb-slot{position:absolute;left:var(--orb-left);top:var(--orb-top);width:24%;aspect-ratio:1}
 .orb-slot.is-flown{visibility:hidden}
 .hero-stage.is-outside .orb-float,.orb-slot.is-flown .orb-float{animation-play-state:paused}
 .orb-float {
@@ -55,58 +55,50 @@ a{color:inherit}
   transition: opacity .18s;
 }
 .orb-float:focus-visible { outline: 2px solid var(--bronze); outline-offset: -14px; }
-.orb-slot.showing { z-index: 3; }
+.orb-slot.showing { z-index: 5; }
 .orb-slot.showing .orb-float { animation-play-state: paused; }
 .orb-slot.showing img { filter: brightness(.5); }
 .orb-slot.showing .orb-float::before, .orb-slot.showing .orb-caption { opacity: 1; }
 .orb-caption {
   z-index: 2;
   display: grid;
-  align-content: center;
-  gap: 1.4cqi;
-  width: 70%;
+  justify-items: center;
+  gap: min(5px, 1.447cqi);
+  width: min(309px, 89.41cqi);
   margin: 0;
   opacity: 0;
   pointer-events: none;
   transition: opacity .18s;
   text-align: center;
-  font: 500 clamp(.68rem, 3.85cqi, 1.125rem)/1.36 Manrope, Arial, sans-serif;
+  font-family: Manrope, Arial, sans-serif;
 }
-.orb-title { font-size: clamp(.73rem, 4.7cqi, 1.35rem); line-height: 1.18; text-wrap: balance; }
-.orb-details { color: #f3eee5; text-wrap: pretty; }
-@container (max-width: 190px) {
-  .orb-caption {
-    display: block;
-    width: 64%;
-    max-height: 56cqi;
-    overflow-y: auto;
-    overscroll-behavior-y: contain;
-    scrollbar-width: none;
-  }
-  .orb-slot.showing .orb-caption { pointer-events: auto; }
-  .orb-title, .orb-details { display: block; }
-  .orb-details { margin-top: 4px; }
-}
+.orb-title { font-size: min(16px, 4.63cqi); font-weight: 700; line-height: 1.2; color: rgb(255 255 255 / .8); text-wrap: balance; }
+.orb-details { width: min(266.36px, 77.08cqi); font-size: min(14px, 4.051cqi); font-weight: 500; line-height: 1.4; color: rgb(200 200 200 / .8); }
 @keyframes levitate{from{transform:translate3d(-2px,1px,0) rotate(-.35deg)}to{transform:translate3d(3px,-10px,0) rotate(.35deg)}}
-.orb-podium{left:61.06%;top:-10.28%;--delay:-3.5s;--float-time:6.2s}
-.orb-team{left:68.14%;top:58.4%;--delay:-6s;--float-time:8s}
-.orb-group{left:1.19%;top:-4.36%;--delay:-4.7s}
-.orb-award{left:81.89%;top:19.23%;--delay:-2s;--float-time:6.9s}
-.orb-flowers{left:25.15%;top:67.42%;--delay:-.5s;--float-time:6.4s}
-.orb-archive{left:2.72%;top:42.94%;--delay:-1.4s;--float-time:7.9s}
+.orb-podium{--orb-left:61.06%;--orb-top:-10.28%;--delay:-3.5s;--float-time:6.2s}
+.orb-team{--orb-left:68.14%;--orb-top:58.4%;--delay:-6s;--float-time:8s}
+.orb-group{--orb-left:1.19%;--orb-top:-4.36%;--delay:-4.7s}
+.orb-award{--orb-left:81.89%;--orb-top:19.23%;--delay:-2s;--float-time:6.9s}
+.orb-flowers{--orb-left:25.15%;--orb-top:67.42%;--delay:-.5s;--float-time:6.4s}
+.orb-archive{--orb-left:2.72%;--orb-top:42.94%;--delay:-1.4s;--float-time:7.9s}
 @media(min-width:741px) and (hover:hover){
- .orb-group .orb-caption{
-   --caption-top:calc(var(--header-height) + var(--stage-h) * .0436 + 13px - var(--header-bottom-padding,0px));
-   display:grid;justify-items:center;align-content:safe center;align-self:start;
-   width:min(309px,89.4cqi);height:max(44px,calc(90cqi - var(--caption-top)));margin-top:var(--caption-top);
-   gap:5px;text-align:center;text-shadow:0 1px 3px #0009;overflow-y:auto;overscroll-behavior-y:contain;
-   scrollbar-width:thin;scrollbar-gutter:stable both-edges;
+ .intro{--stage-h:min(100svh,clamp(540px,53.889vw,1080px))}
+ .memories{
+   --orb-size:min(24vw,max(120px,calc((var(--stage-h) - var(--header-height) - 24px) / .66)));
+   --orb-radius:calc(var(--orb-size) / 2);
+   --caption-edge-x:calc(min(154.5px,var(--orb-size) * .44705) + 8px);
+   --caption-edge-y:calc(min(114px,var(--orb-size) * .33) + 12px);
+   --caption-safe-top:calc(var(--header-height) - var(--header-bottom-padding,0px));
  }
- .orb-group .orb-title{font-size:clamp(12px,4.63cqi,16px);font-weight:700;line-height:1.2;text-wrap:wrap}
- .orb-group .orb-details{width:min(266px,77.1cqi,100%);margin:0;font-size:clamp(11px,4.05cqi,14px);font-weight:500;line-height:1.4;text-wrap:wrap}
- .orb-group.showing .orb-caption{pointer-events:auto}
+ /* Position the whole orb once, leaving room for its centered caption and levitation. */
+ .orb-slot{
+   width:var(--orb-size);
+   left:calc(clamp(var(--caption-edge-x),var(--orb-left) + var(--orb-radius),100% - var(--caption-edge-x)) - var(--orb-radius));
+   top:calc(clamp(var(--caption-safe-top) + var(--caption-edge-y),var(--orb-top) + var(--orb-radius),100% - var(--caption-edge-y)) - var(--orb-radius));
+ }
+ .orb-podium{--orb-left:64%;--caption-edge-y:calc(min(99px,var(--orb-size) * .287) + 12px)}
 }
-@media(min-width:1121px){.orb-group .orb-caption{--header-bottom-padding:clamp(16px,1.667vw,32px)}}
+@media(min-width:1121px){.memories{--header-bottom-padding:clamp(16px,1.667vw,32px)}}
 .forum-header{position:fixed;inset:0 0 auto;display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);align-items:center;padding:clamp(16px,1.667vw,32px) 2.778%;isolation:isolate;z-index:20}
 .forum-header::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;background:url("assets/header-surface.png") center/100% 100%}
 .forum-header:not(.is-scrolled):not(.menu-open){pointer-events:none}
