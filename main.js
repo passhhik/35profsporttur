@@ -11,6 +11,7 @@
   const motion = matchMedia('(prefers-reduced-motion: reduce)');
   const decorativeOrbs = matchMedia('(max-width: 740px), (hover: none)');
   const compactNavigation = matchMedia('(max-width: 1120px)');
+  const phoneViewport = window.visualViewport;
   const header = document.querySelector('.forum-header');
   const menu = document.getElementById('forum-navigation');
   const navSections = Array.from(menu.querySelectorAll('a'), link => ({
@@ -43,6 +44,8 @@
   let navigationScroll;
   let navigationTimer;
   let menuOpen = false;
+  let phoneCoverWidth;
+  let phoneCoverHeight;
   let metrics;
 
   function closePhoto() {
@@ -158,8 +161,27 @@
   new ResizeObserver(measureHeader).observe(header);
   measureHeader();
 
+  function fitPhoneCover() {
+    if (!decorativeOrbs.matches) {
+      if (phoneCoverHeight === undefined) return;
+      intro.style.removeProperty('--phone-cover-height');
+      phoneCoverWidth = phoneCoverHeight = undefined;
+      return;
+    }
+    if (phoneViewport && Math.abs(phoneViewport.scale - 1) > .01) return;
+    const width = root.clientWidth;
+    // Mobile browser bars can change height mid-swipe. Keep the scroll geometry stable then.
+    if (width === phoneCoverWidth && scrollY > 1) return;
+    const height = Math.round(phoneViewport?.height ?? innerHeight);
+    if (height <= 0) return;
+    phoneCoverWidth = width;
+    if (height === phoneCoverHeight) return;
+    phoneCoverHeight = height;
+    intro.style.setProperty('--phone-cover-height', height + 'px');
+  }
   function measure() {
     closePhoto();
+    fitPhoneCover();
     root.classList.toggle('has-motion', animatesHero());
     const box = intro.getBoundingClientRect();
     const stageHeight = stage.offsetHeight;
@@ -259,6 +281,7 @@
     }
   }
   function queue() {
+    if (decorativeOrbs.matches && scrollY <= 1) fitPhoneCover();
     if (decorativeOrbs.matches || !animatesHero()) {
       if (!navigationTimer) {
         navigationTimer = setTimeout(() => {
@@ -273,6 +296,7 @@
     if (!frame) frame = requestAnimationFrame(update);
   }
   motion.addEventListener('change', measure);
+  (phoneViewport ?? window).addEventListener('resize', fitPhoneCover, { passive:true });
   document.fonts.ready.then(measure);
   // Stable cover dimensions shouldn't be remeasured when Safari hides its toolbar.
   const heroResize = new ResizeObserver(measure);

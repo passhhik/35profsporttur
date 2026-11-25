@@ -160,9 +160,9 @@ a{color:inherit}
  .forum-btn{font-size:.93rem;padding:11px 18px;min-height:44px}
 }
 @media(max-width:740px),(hover:none){
- .intro{--stage-h:100svh}
+ .intro{--stage-h:var(--phone-cover-height,100svh)}
  html:not(.has-motion) .hero-stage{position:relative;top:auto}
- .has-motion .intro{height:calc(var(--stage-h) + clamp(360px,94svh,780px))}
+ .has-motion .intro{height:calc(var(--stage-h) + clamp(360px,calc(var(--stage-h) * .94),780px))}
  .has-motion .hero-stage{top:0}
  .has-motion .intro + #history{translate:none;scroll-margin-top:0}
  .memories,.orb-float{pointer-events:none}
@@ -171,7 +171,7 @@ a{color:inherit}
  .orb-group .orb-float,.orb-podium .orb-float,.orb-team .orb-float{animation:levitate-soft var(--float-time,7s) var(--delay,0s) ease-in-out 2 alternate both}
  .word-window{font-size:clamp(6rem,32vw,14rem);height:1.15em;margin-top:-.575em}
  .forum-word{left:0;font-size:inherit}
- .has-motion .word-window{top:calc(100% + .31em - clamp(12px,2.5svh,24px))}
+ .has-motion .word-window{top:calc(100% + .31em - clamp(12px,calc(var(--stage-h) * .025),24px))}
  html:not(.has-motion) .word-window{height:16vw;margin-top:-8vw}
  html:not(.has-motion) .forum-word{width:100%;text-align:center;font-size:min(10.2vw,6rem)}
 }
