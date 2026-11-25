@@ -175,17 +175,21 @@
     update(performance.now(), true);
   }
   function animatesHero() {
-    return !motion.matches && !decorativeOrbs.matches;
+    return !motion.matches;
   }
   function update(now, snap = false) {
     frame = 0;
-    if (snap || scrollY !== navigationScroll) {
-      navigationScroll = scrollY;
+    const pageScroll = scrollY;
+    const touchLayout = decorativeOrbs.matches;
+    if (snap || (!touchLayout && pageScroll !== navigationScroll)) {
+      navigationScroll = pageScroll;
       updateNavigation();
     }
-    const progress = animatesHero() ? limit((scrollY - metrics.top) / metrics.distance) : 0;
+    const progress = animatesHero() ? limit((pageScroll - metrics.top) / metrics.distance) : 0;
     if (progress !== previousProgress) {
-      history.style.setProperty('--history-lead', ((progress - 1) * metrics.distance).toFixed(2) + 'px');
+      if (!touchLayout) {
+        history.style.setProperty('--history-lead', ((progress - 1) * metrics.distance).toFixed(2) + 'px');
+      }
       for (const flight of flights) {
         const {slot, start, end, drift, lift} = flight;
         const phase = smooth(limit((progress - start) / (end - start)));
@@ -206,25 +210,29 @@
     // The type follows the second stretch of scroll after the last photograph leaves.
     const target = smooth(limit((progress - .50) / .50));
     const elapsed = previousFrame ? Math.min(40, now - previousFrame) : 16;
-    const outside = scrollY >= metrics.top + metrics.distance + metrics.height * .15;
-    wordProgress = snap || outside ? target :
+    const outside = pageScroll >= metrics.top + metrics.distance + metrics.height * .15;
+    const oldWordProgress = wordProgress;
+    wordProgress = snap || touchLayout || outside ? target :
       wordProgress + (target - wordProgress) * (1 - Math.exp(-elapsed / 70));
     if (Math.abs(wordProgress - target) < .00015) wordProgress = target;
-    word.style.setProperty('--word-x', (-metrics.wordTravel * wordProgress).toFixed(2) + 'px');
-    wordWindow.style.transform = 'translateY(' + (-metrics.height * .23 * wordProgress).toFixed(2) + 'px)';
+    if (snap || wordProgress !== oldWordProgress) {
+      word.style.setProperty('--word-x', (-metrics.wordTravel * wordProgress).toFixed(2) + 'px');
+      wordWindow.style.transform = 'translateY(' + (-metrics.height * .23 * wordProgress).toFixed(2) + 'px)';
+    }
     previousFrame = wordProgress === target ? 0 : now;
     if (wordProgress !== target) frame = requestAnimationFrame(update);
   }
   function queue() {
-    if (!animatesHero()) {
+    if (decorativeOrbs.matches || !animatesHero()) {
       if (!navigationTimer) {
         navigationTimer = setTimeout(() => {
           navigationTimer = undefined;
           updateNavigation();
         }, 80);
       }
-      return;
     }
+    if (!animatesHero()) return;
+    if (decorativeOrbs.matches && previousProgress === 1 && scrollY >= metrics.top + metrics.distance) return;
     closePhoto();
     if (!frame) frame = requestAnimationFrame(update);
   }

@@ -161,13 +161,17 @@ a{color:inherit}
  .forum-btn{font-size:.93rem;padding:11px 18px;min-height:44px}
 }
 @media(max-width:740px),(hover:none){
- .hero-stage{position:relative;top:auto}
+ html:not(.has-motion) .hero-stage{position:relative;top:auto}
+ .has-motion .intro{height:calc(var(--stage-h) + clamp(360px,94svh,780px))}
+ .has-motion .intro + #history{translate:none;scroll-margin-top:0}
  .memories,.orb-float{pointer-events:none}
  .orb-float::before,.orb-caption{display:none}
  .orb-float{container-type:normal;animation:none}
  .orb-group .orb-float,.orb-podium .orb-float,.orb-team .orb-float{animation:levitate-soft var(--float-time,7s) var(--delay,0s) ease-in-out 2 alternate both}
- .word-window{height:16vw;margin-top:-8vw}
- .forum-word{left:0;width:100%;text-align:center;font-size:min(10.2vw,6rem)}
+ .word-window{font-size:clamp(6rem,32vw,14rem);height:1.15em;margin-top:-.575em}
+ .forum-word{left:0;font-size:inherit}
+ html:not(.has-motion) .word-window{height:16vw;margin-top:-8vw}
+ html:not(.has-motion) .forum-word{width:100%;text-align:center;font-size:min(10.2vw,6rem)}
 }
 @keyframes levitate-soft{from{transform:translateY(0)}to{transform:translateY(-6px)}}
 @media(max-width:420px){.forum-date{font-size:.94rem}.orb-award{left:90%;top:28%}.forum-deck{max-width:23em}}
